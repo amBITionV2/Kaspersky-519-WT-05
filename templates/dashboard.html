@@ -211,7 +211,7 @@ echo '{% extends "base.html" %}
             </ul>
           {% else %}
             <p>No requests made so far</p>
-            <a class="btn" href="{{ url_for("request_help") }}">Create Your First Request</a>
+            <a class="btn btn-spaced" href="{{ url_for("request_help") }}">Create Your First Request</a>
           {% endif %}
         </div>
       </div>
@@ -228,7 +228,7 @@ echo '{% extends "base.html" %}
             </ul>
           {% else %}
             <p>No offers made yet</p>
-            <a class="btn" href="{{ url_for("marketplace") }}">Browse Available Requests</a>
+            <a class="btn btn-spaced" href="{{ url_for("marketplace") }}">Browse Available Requests</a>
           {% endif %}
         </div>
       </div>
