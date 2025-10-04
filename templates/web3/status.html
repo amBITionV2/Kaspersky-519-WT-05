@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="card">
+    <h2>Web3 Status</h2>
+    <p class="muted">RPC URL is {{ rpc_url }}.</p>
+    {% if error %}
+      <div class="flash error">{{ error }}</div>
+    {% endif %}
+    <ul>
+      <li><strong>Connected:</strong> {{ 'Yes' if ok else 'No' }}</li>
+      {% if ok %}
+        <li><strong>Client:</strong> {{ net_info.client }}</li>
+        <li><strong>Latest block:</strong> {{ latest_block }}</li>
+      {% endif %}
+    </ul>
+  </div>
+
+  <div class="section" style="margin-top:1rem;">
+    <h3>Check Address Balance</h3>
+    <form method="get" action="{{ url_for('web3_balance') }}">
+      <div class="field">
+        <label>Address</label>
+        <input class="input" type="text" name="address" placeholder="0x..." />
+      </div>
+      <button class="btn" type="submit">Check Balance</button>
+    </form>
+  </div>
+{% endblock %}

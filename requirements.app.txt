@@ -3,3 +3,4 @@ Flask-SQLAlchemy
 Flask-Login
 Flask-WTF
 email_validator
+web3

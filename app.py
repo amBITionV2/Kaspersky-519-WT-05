@@ -7,6 +7,7 @@ from flask_login import (
     current_user,
 )
 from extensions import db, login_manager, csrf
+from web3_service import init_web3, get_web3
 from flask_scss import Scss
 
 
@@ -24,6 +25,10 @@ def create_app() -> Flask:
     csrf.init_app(app)
     # Initialize SCSS compiler
     Scss(app, static_dir=app.config["STATIC_ASSET_DIR"], asset_dir=app.config["SCSS_ASSET_DIR"])
+
+    # Initialize Web3 client (if ETH_RPC_URL set)
+    app.extensions = getattr(app, "extensions", {})
+    app.extensions["web3"] = init_web3(app.config.get("ETH_RPC_URL", ""))
 
     # Flask-Login config
     class _AnonymousUser(AnonymousUserMixin):
@@ -56,6 +61,51 @@ def create_app() -> Flask:
     @app.route("/about")
     def about():
         return render_template("about.html")
+
+    # Web3 routes
+    @app.route("/web3")
+    def web3_status():
+        w3 = get_web3()
+        ok = False
+        net_info = {}
+        latest_block = None
+        error = None
+        if w3 is not None:
+            try:
+                ok = w3.is_connected()
+                if ok:
+                    net_info = {
+                        "client": w3.client_version,
+                    }
+                    latest_block = w3.eth.block_number
+            except Exception as e:  # noqa: BLE001
+                error = str(e)
+        return render_template(
+            "web3/status.html",
+            ok=ok,
+            net_info=net_info,
+            latest_block=latest_block,
+            rpc_url=("configured" if app.config.get("ETH_RPC_URL") else "not set"),
+            error=error,
+        )
+
+    @app.route("/web3/balance")
+    def web3_balance():
+        from flask import request as flask_request
+        w3 = get_web3()
+        addr = flask_request.args.get("address", "").strip()
+        balance_eth = None
+        error = None
+        if w3 is None:
+            error = "Web3 is not configured. Set ETH_RPC_URL."
+        elif addr:
+            try:
+                checksum = w3.to_checksum_address(addr)
+                wei = w3.eth.get_balance(checksum)
+                balance_eth = w3.from_wei(wei, "ether")
+            except Exception as e:  # noqa: BLE001
+                error = str(e)
+        return render_template("web3/balance.html", address=addr, balance=balance_eth, error=error)
 
     # Auth routes
     @app.route("/signup", methods=["GET", "POST"])
