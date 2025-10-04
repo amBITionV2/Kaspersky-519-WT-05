@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="grid grid-2">
+    <section class="card">
+      <div class="hero">
+        <h2>Request Help</h2>
+        <p class="muted">Post a new request and get assistance from the community.</p>
+      </div>
+      <form method="post" novalidate id="request-help-form">
+        {{ form.hidden_tag() }}
+
+        <div class="field">
+          <label>Title</label>
+          {{ form.title(class='input', placeholder='e.g., Need help setting up my printer') }}
+          {% for e in form.title.errors %}<div class="flash error">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="field">
+          <label>Description</label>
+          {{ form.description(class='input', rows='4', placeholder='Describe the task, context, and expectations...') }}
+          {% for e in form.description.errors %}<div class="flash error">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Category</label>
+            {{ form.category(class='input') }}
+            {% for e in form.category.errors %}<div class="flash error">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="field">
+            <label>Location</label>
+            {{ form.location(class='input', placeholder='City/Area (map integration later)') }}
+          </div>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Date & Time needed</label>
+            {{ form.datetime_needed(class='input') }}
+          </div>
+          <div class="field">
+            <label>Duration estimate</label>
+            {{ form.duration_estimate(class='input', placeholder='e.g., 2 hours') }}
+          </div>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Price offered</label>
+            {{ form.price_offered(class='input', placeholder='e.g., 500') }}
+          </div>
+          <div class="field" style="display:flex; align-items:center; gap:.6rem;">
+            {{ form.is_volunteer() }} <label style="margin:0">This is a volunteer/free request</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Skills required</label>
+          {{ form.skills_required(class='input', placeholder='e.g., plumbing, basic electrical') }}
+        </div>
+
+        <div class="field">
+          <label>Additional notes</label>
+          {{ form.notes(class='input', rows='3', placeholder='Anything else helpers should know...') }}
+        </div>
+
+        <div class="actions">
+          {{ form.submit(class='btn', id='submit-btn', value='Post Request') }}
+        </div>
+      </form>
+    </section>
+
+    <section>
+      <div class="hero">
+        <h3>Your Requests</h3>
+        <p class="muted">Manage your previously posted requests.</p>
+      </div>
+      {% if my_requests %}
+        <div class="requests">
+          {% for r in my_requests %}
+            <div class="request-card">
+              <div class="request-card__head">
+                <h4>{{ r.title }}</h4>
+                <span class="badge {{ r.status }}">{{ r.status|capitalize }}</span>
+              </div>
+              <div class="request-card__meta">
+                <span class="tag"><i class="fa-regular fa-folder"></i> {{ r.category or 'General' }}</span>
+                {% if r.time_needed %}<span class="tag"><i class="fa-regular fa-clock"></i> {{ r.time_needed }}</span>{% endif %}
+                {% if r.is_volunteer %}
+                  <span class="tag volunteer"><i class="fa-solid fa-hand-holding-heart"></i> Volunteer</span>
+                {% elif r.price is not none %}
+                  <span class="tag price"><i class="fa-solid fa-coins"></i> {{ '%.2f'|format(r.price) }}</span>
+                {% endif %}
+              </div>
+              <p class="muted">{{ r.description[:140] }}{% if r.description|length > 140 %}...{% endif %}</p>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted">You haven't posted any requests yet.</p>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

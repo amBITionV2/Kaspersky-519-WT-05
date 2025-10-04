@@ -1,0 +1,17 @@
+.requests { display: grid; gap: 1rem; }
+
+.request-card {
+  @include card;
+}
+.request-card__head { display:flex; align-items:center; justify-content:space-between; gap:.6rem; }
+.request-card__head h4 { margin: 0; }
+.request-card__meta { display:flex; flex-wrap:wrap; gap:.5rem; margin:.4rem 0 .3rem; }
+.tag { display:inline-flex; align-items:center; gap:.35rem; padding:.25rem .5rem; border:1px solid $border; border-radius: 999px; color:$muted; }
+.tag.price { border-color: rgba(251,191,36,.35); color: #ffd78a; }
+.tag.volunteer { border-color: rgba(52,211,153,.4); color: #b7f7dc; }
+
+.badge { padding:.25rem .55rem; border-radius:999px; font-size:.8rem; border:1px solid $border; color:$muted; }
+.badge.open { background: rgba(96,165,250,.12); border-color: rgba(96,165,250,.35); color: #bed8ff; }
+.badge.in_progress { background: rgba(251,191,36,.12); border-color: rgba(251,191,36,.35); color: #ffd78a; }
+.badge.completed { background: rgba(52,211,153,.12); border-color: rgba(52,211,153,.35); color: #b7f7dc; }
+.badge.cancelled { background: rgba(248,113,113,.12); border-color: rgba(248,113,113,.35); color: #f3b0b0; }

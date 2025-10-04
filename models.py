@@ -107,3 +107,40 @@ class Review(db.Model):
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<Review {self.id} on request {self.request_id} {self.reviewer_id}->{self.reviewee_id}>"
+
+
+# -----------------------------
+# Internal blockchain structures
+# -----------------------------
+
+class Block(db.Model):
+    __tablename__ = "blocks"
+
+    id = db.Column(db.Integer, primary_key=True)
+    index = db.Column(db.Integer, nullable=False, unique=True)
+    prev_hash = db.Column(db.String(128), nullable=True)
+    hash = db.Column(db.String(128), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    # Relationships
+    statements = db.relationship("Statement", back_populates="block", lazy=True)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Block idx={self.index} hash={self.hash[:10]}...>"
+
+
+class Statement(db.Model):
+    __tablename__ = "statements"
+
+    id = db.Column(db.Integer, primary_key=True)
+    kind = db.Column(db.String(50), nullable=False)  # e.g., signup, login, logout, request_create
+    payload = db.Column(db.JSON, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    # Block linkage (null until included in a block)
+    block_id = db.Column(db.Integer, db.ForeignKey("blocks.id"), nullable=True, index=True)
+    block = db.relationship("Block", back_populates="statements")
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Statement {self.kind} id={self.id} block={self.block_id}>"

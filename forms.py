@@ -4,7 +4,11 @@ from wtforms import (
     PasswordField,
     BooleanField,
     SubmitField,
+    TextAreaField,
+    SelectField,
+    DecimalField,
 )
+from wtforms.fields.datetime import DateTimeLocalField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional
 
 
@@ -27,3 +31,31 @@ class LoginForm(FlaskForm):
     password = PasswordField("Password", validators=[DataRequired()])
     remember_me = BooleanField("Remember me")
     submit = SubmitField("Log In")
+
+
+class RequestHelpForm(FlaskForm):
+    title = StringField("Title", validators=[DataRequired(), Length(max=200)])
+    description = TextAreaField("Description", validators=[DataRequired(), Length(min=10)])
+    category = SelectField(
+        "Category",
+        choices=[
+            ("Cooking", "Cooking"),
+            ("Cleaning", "Cleaning"),
+            ("Moving", "Moving"),
+            ("Tutoring", "Tutoring"),
+            ("Errands", "Errands"),
+            ("Technical", "Technical"),
+            ("Other", "Other"),
+        ],
+        validators=[DataRequired()],
+    )
+    location = StringField("Location", validators=[Optional(), Length(max=120)])
+    datetime_needed = DateTimeLocalField(
+        "Date & Time needed", format="%Y-%m-%dT%H:%M", validators=[Optional()]
+    )
+    duration_estimate = StringField("Duration estimate", validators=[Optional(), Length(max=120)])
+    price_offered = DecimalField("Price offered", places=2, rounding=None, validators=[Optional()])
+    is_volunteer = BooleanField("This is a volunteer/free request")
+    skills_required = StringField("Skills required", validators=[Optional(), Length(max=200)])
+    notes = TextAreaField("Additional notes", validators=[Optional(), Length(max=1000)])
+    submit = SubmitField("Post Request")

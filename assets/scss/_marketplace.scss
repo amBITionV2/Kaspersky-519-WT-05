@@ -1,0 +1,17 @@
+.marketplace { display:grid; grid-template-columns: 280px 1fr; gap: 1.25rem; }
+@media (max-width: $bp-md) { .marketplace { grid-template-columns: 1fr; } }
+
+.filters { position: sticky; top: 84px; height: max-content; }
+
+.results { display: grid; gap: 1rem; }
+
+.grid-cards { display:grid; gap:1rem; grid-template-columns: repeat(3, minmax(0,1fr)); }
+@media (max-width: $bp-lg) { .grid-cards { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+@media (max-width: $bp-sm) { .grid-cards { grid-template-columns: 1fr; } }
+
+.mp-card { @include card; display:flex; flex-direction:column; gap:.5rem; }
+.mp-card__head { display:flex; align-items:center; gap:.6rem; }
+.avatar { width:36px; height:36px; border-radius:50%; background: linear-gradient(135deg, $accent, $accent2); box-shadow: 0 0 14px rgba(96,165,250,.35); }
+.mp-card__meta { display:flex; flex-wrap:wrap; gap:.5rem; }
+
+.pagination { display:flex; align-items:center; justify-content:space-between; margin-top:.75rem; }

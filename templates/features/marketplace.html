@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="marketplace">
+    <aside class="filters card">
+      <h3 style="margin-top:0;">Filters</h3>
+      <form method="get">
+        <div class="field">
+          <label>Category</label>
+          <select class="input" name="category">
+            <option value="">All</option>
+            {% for c in categories %}
+              <option value="{{ c }}" {% if filters.category == c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label>Location</label>
+          <input class="input" type="text" name="location" value="{{ filters.location }}" placeholder="City/Area" />
+        </div>
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Min Price</label>
+            <input class="input" type="number" step="0.01" name="min_price" value="{{ filters.min_price }}" />
+          </div>
+          <div class="field">
+            <label>Max Price</label>
+            <input class="input" type="number" step="0.01" name="max_price" value="{{ filters.max_price }}" />
+          </div>
+        </div>
+        <div class="field" style="display:flex; align-items:center; gap:.6rem;">
+          <input type="checkbox" name="include_volunteer" id="include_volunteer" {% if filters.include_volunteer %}checked{% endif %} />
+          <label for="include_volunteer" style="margin:0;">Include volunteer/free</label>
+        </div>
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Start Date</label>
+            <input class="input" type="date" name="start_date" value="{{ filters.start_date }}" />
+          </div>
+          <div class="field">
+            <label>End Date</label>
+            <input class="input" type="date" name="end_date" value="{{ filters.end_date }}" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Sort by</label>
+          <select class="input" name="sort">
+            <option value="newest" {% if filters.sort == 'newest' %}selected{% endif %}>Newest</option>
+            <option value="urgent" {% if filters.sort == 'urgent' %}selected{% endif %}>Urgent</option>
+            <option value="price_high_low" {% if filters.sort == 'price_high_low' %}selected{% endif %}>Price: High to Low</option>
+            <option value="price_low_high" {% if filters.sort == 'price_low_high' %}selected{% endif %}>Price: Low to High</option>
+          </select>
+        </div>
+        <div class="actions">
+          <button class="btn" type="submit"><i class="fa-solid fa-filter"></i> Apply</button>
+          <a class="btn secondary" href="{{ url_for('marketplace') }}">Reset</a>
+        </div>
+      </form>
+    </aside>
+
+    <section class="results">
+      <div class="hero">
+        <h2>Marketplace</h2>
+        <p class="muted">Explore open requests and offer your help.</p>
+      </div>
+
+      {% if items %}
+        <div class="grid-cards">
+          {% for r in items %}
+            <div class="mp-card">
+              <div class="mp-card__head">
+                <div class="avatar"></div>
+                <div>
+                  <strong>{{ r.user.username if r.user else 'User' }}</strong>
+                  <div class="muted" style="font-size:.85rem;">{{ r.location or 'Remote/Anywhere' }}</div>
+                </div>
+                <span class="badge {{ r.status }}" style="margin-left:auto;">{{ r.status|capitalize }}</span>
+              </div>
+              <h3>{{ r.title }}</h3>
+              <p class="muted">{{ r.description[:160] }}{% if r.description|length > 160 %}...{% endif %}</p>
+              <div class="mp-card__meta">
+                <span class="tag"><i class="fa-regular fa-folder"></i> {{ r.category or 'General' }}</span>
+                {% if r.time_needed %}<span class="tag"><i class="fa-regular fa-clock"></i> {{ r.time_needed }}</span>{% endif %}
+                {% if r.is_volunteer %}
+                  <span class="tag volunteer"><i class="fa-solid fa-hand-holding-heart"></i> Volunteer</span>
+                {% elif r.price is not none %}
+                  <span class="tag price"><i class="fa-solid fa-coins"></i> {{ '%.2f'|format(r.price) }}</span>
+                {% endif %}
+              </div>
+              <div class="actions">
+                <a class="btn" href="{{ url_for('offer_help') }}"><i class="fa-solid fa-handshake-angle"></i> Offer Help</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="pagination">
+          {% if pagination.has_prev %}
+            <a class="btn secondary" href="{{ url_for('marketplace', page=pagination.prev_num, **filters) }}">Previous</a>
+          {% else %}
+            <span class="btn secondary" style="opacity:.6; pointer-events:none;">Previous</span>
+          {% endif %}
+          <span class="muted">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+          {% if pagination.has_next %}
+            <a class="btn secondary" href="{{ url_for('marketplace', page=pagination.next_num, **filters) }}">Next</a>
+          {% else %}
+            <span class="btn secondary" style="opacity:.6; pointer-events:none;">Next</span>
+          {% endif %}
+        </div>
+      {% else %}
+        <div class="card" style="margin-top:1rem;">
+          <p class="muted">No requests match your filters. Try broadening your search.</p>
+        </div>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

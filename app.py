@@ -9,6 +9,7 @@ from flask_login import (
 from extensions import db, login_manager, csrf
 from web3_service import init_web3, get_web3
 from flask_scss import Scss
+from blockchain_service import append_statement, maybe_seal_block
 
 
 def create_app() -> Flask:
@@ -135,6 +136,19 @@ def create_app() -> Flask:
             user.set_password(form.password.data)
             db.session.add(user)
             db.session.commit()
+            # Blockchain log: signup
+            try:
+                append_statement(
+                    kind="signup",
+                    payload={
+                        "username": user.username,
+                        "email": user.email,
+                    },
+                    user_id=user.id,
+                )
+                maybe_seal_block()
+            except Exception:  # noqa: BLE001
+                pass
             flash("Account created. Please log in.", "success")
             return redirect(url_for("login"))
 
@@ -158,6 +172,16 @@ def create_app() -> Flask:
             user = User.query.filter_by(email=form.email.data.lower()).first()
             if user and user.check_password(form.password.data):
                 login_user(user, remember=form.remember_me.data)
+                # Blockchain log: login
+                try:
+                    append_statement(
+                        kind="login",
+                        payload={"remember": bool(form.remember_me.data)},
+                        user_id=user.id,
+                    )
+                    maybe_seal_block()
+                except Exception:  # noqa: BLE001
+                    pass
                 flash("Logged in successfully.", "success")
                 return redirect(url_for("post_login_redirect"))
             flash("Invalid email or password.", "error")
@@ -171,7 +195,18 @@ def create_app() -> Flask:
     @app.route("/logout")
     @login_required
     def logout():
+        uid = getattr(current_user, "id", None)
         logout_user()
+        # Blockchain log: logout
+        try:
+            append_statement(
+                kind="logout",
+                payload={},
+                user_id=uid,
+            )
+            maybe_seal_block()
+        except Exception:  # noqa: BLE001
+            pass
         flash("You have been logged out.", "info")
         return redirect(url_for("login"))
 
@@ -233,10 +268,49 @@ def create_app() -> Flask:
         return redirect(url_for("dashboard"))
 
     # Feature pages (placeholders)
-    @app.route("/request-help")
+    @app.route("/request-help", methods=["GET", "POST"])
     @login_required
     def request_help():
-        return render_template("features/request_help.html")
+        from models import HelpRequest
+        from forms import RequestHelpForm
+
+        form = RequestHelpForm()
+        if form.validate_on_submit():
+            desc = form.description.data
+            # Append skills and notes for now to description to avoid schema changes
+            if form.skills_required.data:
+                desc += f"\n\nSkills required: {form.skills_required.data}"
+            if form.notes.data:
+                desc += f"\n\nNotes: {form.notes.data}"
+
+            hr = HelpRequest(
+                user_id=current_user.id,
+                title=form.title.data,
+                description=desc,
+                category=form.category.data,
+                location=form.location.data or None,
+                time_needed=(form.datetime_needed.data.strftime("%Y-%m-%d %H:%M") if form.datetime_needed.data else form.duration_estimate.data or None),
+                price=float(form.price_offered.data) if (form.price_offered.data and not form.is_volunteer.data) else None,
+                is_volunteer=bool(form.is_volunteer.data),
+            )
+            db.session.add(hr)
+            db.session.commit()
+            flash("Request posted successfully.", "success")
+            return redirect(url_for("request_help"))
+
+        # If POST with errors, flash them
+        if request.method == "POST" and form.errors:
+            for field, errs in form.errors.items():
+                for e in errs:
+                    flash(f"{field}: {e}", "error")
+
+        # List user's existing requests
+        my_requests = (
+            HelpRequest.query.filter_by(user_id=current_user.id)
+            .order_by(HelpRequest.created_at.desc())
+            .all()
+        )
+        return render_template("features/request_help.html", form=form, my_requests=my_requests)
 
     @app.route("/offer-help")
     @login_required
@@ -257,6 +331,99 @@ def create_app() -> Flask:
     @login_required
     def nearby():
         return render_template("features/nearby.html")
+
+    @app.route("/marketplace")
+    def marketplace():
+        from models import HelpRequest, User
+        from sqlalchemy import or_, and_
+
+        q = HelpRequest.query.filter(HelpRequest.status == "open")
+
+        # Filters
+        category = request.args.get("category", "").strip()
+        location_q = request.args.get("location", "").strip()
+        min_price = request.args.get("min_price", "").strip()
+        max_price = request.args.get("max_price", "").strip()
+        include_volunteer = request.args.get("include_volunteer", "on")  # default include
+        start_date = request.args.get("start_date", "").strip()  # YYYY-MM-DD
+        end_date = request.args.get("end_date", "").strip()      # YYYY-MM-DD
+        sort = request.args.get("sort", "newest")
+        page = int(request.args.get("page", 1) or 1)
+        per_page = 9
+
+        if category:
+            q = q.filter(HelpRequest.category == category)
+        if location_q:
+            q = q.filter(HelpRequest.location.ilike(f"%{location_q}%"))
+
+        # Price / volunteer
+        price_filters = []
+        if min_price:
+            try:
+                price_filters.append(HelpRequest.price >= float(min_price))
+            except ValueError:
+                pass
+        if max_price:
+            try:
+                price_filters.append(HelpRequest.price <= float(max_price))
+            except ValueError:
+                pass
+        if price_filters:
+            range_filter = and_(*price_filters)
+            if include_volunteer:
+                q = q.filter(or_(HelpRequest.is_volunteer.is_(True), range_filter))
+            else:
+                q = q.filter(range_filter, HelpRequest.is_volunteer.is_(False))
+        else:
+            if not include_volunteer:
+                q = q.filter(HelpRequest.is_volunteer.is_(False))
+
+        # Date range (use created_at since time_needed is free text)
+        from datetime import datetime
+        def parse_date(s):
+            try:
+                return datetime.strptime(s, "%Y-%m-%d")
+            except Exception:
+                return None
+        sd = parse_date(start_date)
+        ed = parse_date(end_date)
+        if sd:
+            q = q.filter(HelpRequest.created_at >= sd)
+        if ed:
+            from datetime import timedelta
+            q = q.filter(HelpRequest.created_at < ed + timedelta(days=1))
+
+        # Sorting
+        if sort == "price_high_low":
+            q = q.order_by(HelpRequest.price.desc().nullslast(), HelpRequest.created_at.desc())
+        elif sort == "price_low_high":
+            q = q.order_by(HelpRequest.price.asc().nullsfirst(), HelpRequest.created_at.desc())
+        elif sort == "urgent":
+            q = q.order_by(HelpRequest.created_at.asc())
+        else:  # newest
+            q = q.order_by(HelpRequest.created_at.desc())
+
+        pagination = q.paginate(page=page, per_page=per_page, error_out=False)
+        items = pagination.items
+
+        categories = ["Cooking", "Cleaning", "Moving", "Tutoring", "Errands", "Technical", "Other"]
+
+        return render_template(
+            "features/marketplace.html",
+            items=items,
+            pagination=pagination,
+            categories=categories,
+            filters={
+                "category": category,
+                "location": location_q,
+                "min_price": min_price,
+                "max_price": max_price,
+                "include_volunteer": include_volunteer,
+                "start_date": start_date,
+                "end_date": end_date,
+                "sort": sort,
+            },
+        )
 
     # Error handlers
     @app.errorhandler(404)

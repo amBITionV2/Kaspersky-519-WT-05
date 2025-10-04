@@ -19,3 +19,5 @@ class Config:
     # Web3 / Blockchain
     ETH_RPC_URL = os.environ.get("ETH_RPC_URL", "")  # e.g. https://sepolia.infura.io/v3/<KEY>
     ETH_CHAIN_NAME = os.environ.get("ETH_CHAIN_NAME", "")
+    # Internal blockchain batching (number of statements per block)
+    BLOCK_SIZE = int(os.environ.get("BLOCK_SIZE", "10"))
