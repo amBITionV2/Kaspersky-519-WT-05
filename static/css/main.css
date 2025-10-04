@@ -1,0 +1,29 @@
+/* Basic styles for the starter */
+:root {
+  --bg: #0f172a;
+  --fg: #e2e8f0;
+  --accent: #38bdf8;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.container {
+  width: min(90%, 960px);
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.site-header, .site-footer {
+  background: #0b1222;
+  border-bottom: 1px solid #1f2937;
+}
+.site-header a { color: var(--fg); text-decoration: none; }
+
+h1, h2, h3 { color: var(--accent); }

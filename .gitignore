@@ -1,0 +1,39 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# VSCode / IDE
+.vscode/
+.idea/
+
+# Distribution / packaging
+build/
+dist/
+.eggs/
+*.egg-info/
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage*
+.pytest_cache/
+
+# Logs
+*.log
+
+# SQLite database
+app.db
+
+# OS / misc
+.DS_Store
+Thumbs.db
+
+# Local environment folders (kept for deployment per README)
+# Do NOT ignore myenv/
