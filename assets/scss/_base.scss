@@ -8,42 +8,50 @@ body {
   font-family: $font-stack;
   background: radial-gradient(1200px 600px at 10% -10%, rgba(34,211,238,.12), transparent 60%),
               radial-gradient(1200px 600px at 110% 10%, rgba(96,165,250,.10), transparent 60%),
-              $bg;
-  color: $fg;
+              var(--bg-color);
+  color: var(--text-color);
   line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .container { @include container; }
 
-h1, h2, h3 { color: $fg; letter-spacing: .2px; }
-.muted { color: $muted; }
+h1, h2, h3 { color: var(--text-color); letter-spacing: .2px; }
+.muted { color: var(--text-muted); }
 
 .btn {
   display: inline-block;
   padding: .65rem 1rem;
-  border-radius: 10px;
-  background: linear-gradient(135deg, $accent, $accent2);
-  color: #0b1020;
+  border-radius: var(--border-radius);
+  background: linear-gradient(135deg, var(--accent-color), var(--accent2-color));
+  color: #ffffff;
   font-weight: 700;
   border: none;
   cursor: pointer;
-  box-shadow: 0 10px 20px rgba(96,165,250,.25);
-  &:hover { filter: brightness(1.05); }
-  &.secondary { background: #101826; color: $fg; border: 1px solid $border; box-shadow: none; }
+  box-shadow: 0 10px 20px rgba(59, 130, 246, .25);
+  transition: all 0.3s ease;
+  &:hover { filter: brightness(1.05); transform: translateY(-2px); }
+  &.secondary {
+    background: var(--panel-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    box-shadow: none;
+    &:hover { background: var(--border-color); }
+  }
 }
 
 .field { margin-bottom: 1rem; }
-label { display:block; margin-bottom: .45rem; color: $muted; font-size: .95rem; }
+label { display:block; margin-bottom: .45rem; color: var(--text-muted); font-size: .95rem; }
 .input, input[type="text"], input[type="email"], input[type="password"], textarea, select {
   width: 100%;
-  background: #0e162b;
-  color: $fg;
-  border: 1px solid #1f2a44;
-  border-radius: 10px;
+  background: var(--panel-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
   padding: .7rem .9rem;
   outline: none;
-  transition: border-color .15s ease, box-shadow .15s ease;
-  &:focus { @include focus-ring($accent); }
+  transition: border-color .15s ease, box-shadow .15s ease, background-color 0.3s ease;
+  &:focus { @include focus-ring(var(--accent-color)); }
 }
 
 .grid { display: grid; gap: 1.25rem; }
@@ -51,15 +59,100 @@ label { display:block; margin-bottom: .45rem; color: $muted; font-size: .95rem; 
 @media (max-width: $bp-md) { .grid-2 { grid-template-columns: 1fr; } }
 
 .flashes { margin-bottom: 1rem; }
-.flash { padding: .75rem 1rem; border-radius: 10px; border: 1px solid $border; margin-bottom: .6rem; }
-.flash.success { background: rgba(52,211,153, .1); border-color: rgba(52,211,153, .3); color: #b7f7dc; }
-.flash.error { background: rgba(248,113,113, .08); border-color: rgba(248,113,113, .3); color: #f3b0b0; }
-.flash.info { background: rgba(96,165,250, .08); border-color: rgba(96,165,250, .3); color: #bed8ff; }
+.flash {
+  padding: .75rem 1rem;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  margin-bottom: .6rem;
+  transition: all 0.3s ease;
+}
+.flash.success { background: rgba(16, 185, 129, .1); border-color: rgba(16, 185, 129, .3); color: #10b981; }
+.flash.error { background: rgba(239, 68, 68, .08); border-color: rgba(239, 68, 68, .3); color: #ef4444; }
+.flash.info { background: rgba(59, 130, 246, .08); border-color: rgba(59, 130, 246, .3); color: #3b82f6; }
 
 .card { @include card; }
-.site-footer { background: rgba(11,16,32,.65); border-top: 1px solid $border; margin-top: 2rem; }
-.site-footer small { color: $muted; }
+.site-footer {
+  background: rgba(15, 23, 42, 0.8);
+  border-top: 1px solid var(--border-color);
+  margin-top: 2rem;
+  transition: background-color 0.3s ease;
+}
+.site-footer small { color: var(--text-muted); }
 
 .auth-wrapper { max-width: 520px; margin: 1rem auto 0; }
 .actions { display: flex; align-items: center; gap: .8rem; }
-.actions a { color: $muted; }
+.actions a { color: var(--text-muted); }
+
+// Theme Toggle Button Styles
+.theme-toggle {
+  position: relative;
+  width: 60px;
+  height: 30px;
+  background: var(--panel-color);
+  border: 2px solid var(--border-color);
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-right: 1rem;
+
+  &:hover {
+    border-color: var(--accent-color);
+    transform: scale(1.05);
+  }
+
+  .theme-icon {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    transition: all 0.3s ease;
+    z-index: 2;
+  }
+
+  .sun-icon {
+    left: 8px;
+    color: #f59e0b;
+    opacity: 1;
+  }
+
+  .moon-icon {
+    right: 8px;
+    color: #60a5fa;
+    opacity: 0.3;
+  }
+
+  .toggle-slider {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 22px;
+    height: 22px;
+    background: linear-gradient(135deg, var(--accent-color), var(--accent2-color));
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+}
+
+// Light theme adjustments for toggle button
+[data-theme="light"] {
+  .theme-toggle {
+    .sun-icon {
+      opacity: 0.3;
+    }
+
+    .moon-icon {
+      opacity: 1;
+    }
+
+    .toggle-slider {
+      left: 34px;
+    }
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}

@@ -12,6 +12,39 @@ $border: #1f2937;
 $shadow: 0 10px 30px rgba(0,0,0,.35);
 $radius: 12px;
 
+// CSS Custom Properties for Theme Switching
+:root {
+  // Dark theme (default)
+  --bg-color: #{$bg};
+  --panel-color: #{$panel};
+  --text-color: #{$fg};
+  --text-muted: #{$muted};
+  --accent-color: #{$accent};
+  --accent2-color: #{$accent2};
+  --danger-color: #{$danger};
+  --warning-color: #{$warning};
+  --success-color: #{$success};
+  --border-color: #{$border};
+  --shadow: #{$shadow};
+  --border-radius: #{$radius}px;
+  --primary-color: #{$accent};
+}
+
+// Light theme
+[data-theme="light"] {
+  --bg-color: #ffffff;
+  --panel-color: #f8fafc;
+  --text-color: #1e293b;
+  --text-muted: #64748b;
+  --accent-color: #3b82f6;
+  --accent2-color: #06b6d4;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+  --success-color: #10b981;
+  --border-color: #e2e8f0;
+  --primary-color: #3b82f6;
+}
+
 // Typography
 $font-stack: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
 

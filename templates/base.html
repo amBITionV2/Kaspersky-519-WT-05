@@ -15,7 +15,18 @@
           <span class="dot"></span>
           <h1 style="margin:0; font-size:1.25rem;"><a href="/">DailyHelper</a></h1>
         </div>
-        <button class="hamburger" aria-label="Toggle menu"><i class="fa-solid fa-bars"></i></button>
+
+        <div class="header-actions">
+          <!-- Theme Toggle Button -->
+          <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+            <i class="fa-solid fa-sun theme-icon sun-icon"></i>
+            <i class="fa-solid fa-moon theme-icon moon-icon"></i>
+            <span class="toggle-slider"></span>
+          </button>
+
+          <button class="hamburger" aria-label="Toggle menu"><i class="fa-solid fa-bars"></i></button>
+        </div>
+
         <nav class="nav-links" id="nav">
           <a href="{{ url_for('index') }}"><i class="fa-solid fa-house"></i> Home</a>
           <a href="{{ url_for('about') }}"><i class="fa-regular fa-circle-question"></i> About</a>
