@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+{% set title = 'About | Community Help' %}
+{% block head_extra %}
+  <meta name="description" content="A blockchain-powered platform connecting people who need help with helpers in their community. Trust, transparency, and fair rewards." />
+  <meta property="og:title" content="Building Trust Through Community & Technology" />
+  <meta property="og:description" content="Decentralized task assistance with on-chain reputation and zero commissions." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="{{ request.url_root.rstrip('/') }}{{ url_for('about') }}" />
+  <meta property="og:image" content="{{ url_for('static', filename='img/og-default.png') }}" />
+{% endblock %}
+{% block content %}
+  <!-- Breadcrumbs -->
+  <nav class="breadcrumbs">
+    <a href="{{ url_for('index') }}">Home</a>
+    <span>›</span>
+    <span>About</span>
+  </nav>
+
+  <!-- Hero Section -->
+  <section id="hero" class="about-hero">
+    <div class="about-hero__bg"></div>
+    <div class="about-hero__content">
+      <h1>Building Trust Through Community & Technology</h1>
+      <p class="lead">A blockchain-powered platform connecting people who need help with those willing to assist</p>
+      <div class="hero-cta">
+        <a class="btn" href="{{ url_for('signup') }}">Get Started</a>
+        <a class="btn secondary" href="#how-it-works">Learn More</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Our Story -->
+  <section id="our-story" class="card reveal">
+    <h2>Our Story</h2>
+    <p>Born from the idea that every community has untapped potential for mutual assistance, our platform bridges the gap between those who need help with everyday tasks and neighbors willing to lend a hand.</p>
+    <p>Traditional help systems often fail us with high fees, fake reviews, and a lack of trust. We designed a better way—community-first, transparent by default, and powered by decentralized technology.</p>
+    <blockquote class="mission">Our mission: <em>To create a transparent, trustworthy ecosystem where help is accessible, contributors are fairly rewarded, and every interaction builds lasting community bonds.</em></blockquote>
+  </section>
+
+  <!-- How It Works -->
+  <section id="how-it-works" class="card reveal">
+    <h2>How It Works</h2>
+    <div class="grid grid-4 about-steps">
+      <div class="step">
+        <div class="step-icon"><i class="fa-regular fa-id-card"></i></div>
+        <h3>Sign Up & Connect</h3>
+        <p>Create your account and connect your digital wallet. Build your profile with skills and interests.</p>
+      </div>
+      <div class="step">
+        <div class="step-icon"><i class="fa-solid fa-list-check"></i></div>
+        <h3>Post or Browse Tasks</h3>
+        <p>Need help? Create a request with details and payment. Want to help? Browse tasks in your neighborhood.</p>
+      </div>
+      <div class="step">
+        <div class="step-icon"><i class="fa-solid fa-handshake"></i></div>
+        <h3>Connect & Complete</h3>
+        <p>Match with helpers or requesters. Complete tasks with clear communication. Blockchain records every interaction.</p>
+      </div>
+      <div class="step">
+        <div class="step-icon"><i class="fa-solid fa-star"></i></div>
+        <h3>Build Reputation</h3>
+        <p>Earn verified reviews after completion. Grow your on-chain reputation score. Unlock trust and opportunities.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Choose Us -->
+  <section id="why" class="card reveal">
+    <h2>Why Choose Us</h2>
+    <div class="grid grid-3 about-features">
+      <div class="feature">
+        <i class="fa-solid fa-certificate"></i>
+        <h3>Blockchain-Verified Trust</h3>
+        <p>Every task completion is recorded on an immutable ledger, eliminating fake reviews.</p>
+      </div>
+      <div class="feature">
+        <i class="fa-solid fa-percent"></i>
+        <h3>Zero Commission Fees</h3>
+        <p>Helpers keep 100% of their earnings through direct crypto payments.</p>
+      </div>
+      <div class="feature">
+        <i class="fa-solid fa-people-arrows"></i>
+        <h3>Dual Payment Model</h3>
+        <p>Support both paid assistance and free volunteering for inclusive community building.</p>
+      </div>
+      <div class="feature">
+        <i class="fa-solid fa-file-contract"></i>
+        <h3>Smart Contract Security</h3>
+        <p>Automated escrow and payment release ensure fair transactions.</p>
+      </div>
+      <div class="feature">
+        <i class="fa-regular fa-star"></i>
+        <h3>Transparent Reputation</h3>
+        <p>Tamper-proof reputation scores based on verified task history.</p>
+      </div>
+      <div class="feature">
+        <i class="fa-solid fa-location-dot"></i>
+        <h3>Local Community Focus</h3>
+        <p>Connect with nearby neighbors for quick, convenient assistance.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Our Vision -->
+  <section id="vision" class="card reveal">
+    <h2>Our Vision</h2>
+    <p>We envision a world where community assistance is seamlessly integrated into daily life, powered by technology that ensures trust without intermediaries. By combining blockchain's transparency with human compassion, we're building neighborhoods where help is always available, fairly compensated, and genuinely trustworthy.</p>
+    <div class="about-stats">
+      <div class="stat"><span class="num">10,000+</span><span class="label">Community helpers</span></div>
+      <div class="stat"><span class="num">50,000+</span><span class="label">Tasks completed</span></div>
+      <div class="stat"><span class="num">95%</span><span class="label">Satisfaction rate</span></div>
+    </div>
+  </section>
+
+  <!-- What You Can Do -->
+  <section id="actions" class="card reveal">
+    <h2>What You Can Do</h2>
+    <div class="grid grid-3 actions-grid">
+      <div class="action">
+        <h3>Need Help?</h3>
+        <p>Moving furniture, cooking meals, tutoring, running errands, pet care, tech support, gardening, home repairs</p>
+        <a class="btn" href="{{ url_for('request_help') }}">Post a Request</a>
+      </div>
+      <div class="action">
+        <h3>Want to Help?</h3>
+        <p>Teaching, cooking, heavy lifting, technology, transportation, elderly care, childcare, language translation</p>
+        <a class="btn" href="{{ url_for('marketplace') }}">Browse Tasks</a>
+      </div>
+      <div class="action">
+        <h3>Support a Cause</h3>
+        <p>NGO partnerships, volunteer drives, community cleanup, education initiatives, environmental projects</p>
+        <a class="btn" href="{{ url_for('volunteer') }}">Find Opportunities</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Technology Stack -->
+  <section id="tech" class="card reveal">
+    <h2>Technology Stack</h2>
+    <p>Built on Core Blockchain for security and transparency.</p>
+    <div class="tech-icons">
+      <span><i class="fa-brands fa-python"></i> Python</span>
+      <span><i class="fa-solid fa-flask"></i> Flask</span>
+      <span><i class="fa-brands fa-ethereum"></i> Core/EVM</span>
+      <span><i class="fa-solid fa-file-contract"></i> Smart Contracts</span>
+      <span><i class="fa-solid fa-database"></i> IPFS</span>
+    </div>
+    <p>Our decentralized architecture ensures your data is secure, transactions are transparent, and no single entity controls the platform.</p>
+  </section>
+
+  <!-- Community Values -->
+  <section id="values" class="card reveal">
+    <h2>Community Values</h2>
+    <div class="grid grid-4 values-grid">
+      <div class="value"><h3>Trust</h3><p>Blockchain verification ensures authentic interactions.</p></div>
+      <div class="value"><h3>Fairness</h3><p>No hidden fees, no intermediaries, just honest compensation.</p></div>
+      <div class="value"><h3>Inclusivity</h3><p>Free volunteer options make help accessible to everyone.</p></div>
+      <div class="value"><h3>Transparency</h3><p>Every transaction is visible and verifiable on-chain.</p></div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="card reveal">
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq">
+      {% set faqs = [
+        ("What is blockchain and why does it matter?", "Blockchain is a distributed ledger that provides transparency and immutability, ensuring trust without centralized intermediaries."),
+        ("How do I get paid for helping?", "You can receive crypto payments directly. In the future, smart contracts can hold escrow and release on completion."),
+        ("Is it safe to meet people from the platform?", "Always meet in public places when possible, verify profiles, and use in-app messaging to coordinate."),
+        ("What if a task isn't completed properly?", "Users can leave honest, verified reviews. Disputes can be resolved via community moderation and smart contract rules."),
+        ("How is reputation calculated?", "Based on verified reviews, task history, and quality signals. Scores are tamper-resistant and tied to on-chain records."),
+        ("Can I volunteer for free?", "Yes. You can set tasks as volunteer-based or offer help without payment."),
+        ("What fees does the platform charge?", "Today, we aim for zero commissions; future optional premium services may be introduced."),
+        ("How do I report problematic users?", "Use the report tools on requests or profiles; flags are reviewed in moderation.")
+      ] %}
+      {% for q, a in faqs %}
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><i class="fa-regular fa-circle-question"></i> {{ q }}</button>
+          <div class="faq-a">{{ a }}</div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Team / Contact -->
+  <section id="team" class="card reveal">
+    <h2>Team & Contact</h2>
+    <div class="grid grid-3 team-grid">
+      <div class="member placeholder"><div class="avatar"></div><h3>Member Name</h3><p class="muted">Role</p></div>
+      <div class="member placeholder"><div class="avatar"></div><h3>Member Name</h3><p class="muted">Role</p></div>
+      <div class="member placeholder"><div class="avatar"></div><h3>Member Name</h3><p class="muted">Role</p></div>
+    </div>
+    <div class="contact">
+      <p>Have questions? We'd love to hear from you!</p>
+      <p>Email: <a href="mailto:support@example.com">support@example.com</a> · Social: <a href="#">Twitter</a> · <a href="#">Discord</a></p>
+    </div>
+  </section>
+
+  <!-- CTA Banner -->
+  <section id="cta" class="card reveal about-cta">
+    <h2>Ready to Make a Difference in Your Community?</h2>
+    <div class="actions">
+      <a class="btn" href="{{ url_for('signup') }}">Get Started</a>
+      <a class="btn secondary" href="#how-it-works">Learn More</a>
+    </div>
+  </section>
+
+  <!-- Back to top -->
+  <button id="backToTop" class="back-to-top" aria-label="Back to top"><i class="fa-solid fa-arrow-up"></i></button>
+
+  <!-- Page scripts: smooth scroll, reveal on scroll, FAQ accordion, back-to-top -->
+  <script>
+  (function(){
+    // Smooth internal anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', (e) => {
+        const id = a.getAttribute('href');
+        if(id && id.length > 1){ e.preventDefault(); document.querySelector(id)?.scrollIntoView({behavior:'smooth'}); }
+      });
+    });
+
+    // Reveal on scroll
+    const revealEls = document.querySelectorAll('.reveal');
+    const obs = new IntersectionObserver((entries)=>{
+      entries.forEach(en=>{ if(en.isIntersecting){ en.target.classList.add('in'); obs.unobserve(en.target); } });
+    }, {threshold: 0.15});
+    revealEls.forEach(el=>obs.observe(el));
+
+    // FAQ accordion
+    document.querySelectorAll('.faq-item .faq-q').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const exp = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!exp));
+        const ans = btn.nextElementSibling;
+        if(ans){ ans.style.maxHeight = !exp ? (ans.scrollHeight + 'px') : '0px'; }
+      });
+    });
+
+    // Back to top
+    const back = document.getElementById('backToTop');
+    window.addEventListener('scroll', ()=>{
+      back.classList.toggle('show', window.scrollY > 500);
+    });
+    back.addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
+  })();
+  </script>
+{% endblock %}

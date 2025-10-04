@@ -1,0 +1,36 @@
+.about-hero { position: relative; overflow: hidden; border-radius: $radius; padding: 3rem 1.25rem; background: linear-gradient(135deg, rgba(96,165,250,.12), rgba(34,197,94,.08)); }
+.about-hero__bg { position:absolute; inset:0; background-image: radial-gradient(600px 200px at 10% 10%, rgba(96,165,250,.15), transparent), radial-gradient(400px 200px at 90% 30%, rgba(34,197,94,.12), transparent); filter: blur(0px); }
+.about-hero__content { position:relative; max-width: 900px; margin: 0 auto; text-align: center; }
+.about-hero h1 { margin: 0 0 .5rem; font-size: clamp(1.6rem, 2.5vw, 2.4rem); }
+.about-hero .lead { color: $muted; margin: 0 0 1rem; }
+.about-hero .hero-cta { display:flex; gap:.6rem; justify-content:center; }
+
+.about-steps .step, .about-features .feature, .values-grid .value, .team-grid .member, .actions-grid .action { @include card; }
+.about-features .feature i { font-size: 1.4rem; color: #b7f7dc; }
+.about-stats { display: grid; gap:.75rem; grid-template-columns: repeat(3, minmax(0,1fr)); text-align:center; }
+.about-stats .num { font-weight: 800; font-size: 1.4rem; color:#b7f7dc; }
+
+.breadcrumbs { font-size:.9rem; color:$muted; margin-bottom:.5rem; display:flex; align-items:center; gap:.4rem; }
+.breadcrumbs a { color: inherit; }
+
+.reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
+.reveal.in { opacity: 1; transform: none; }
+
+.faq .faq-item { border-bottom: 1px solid $border; }
+.faq .faq-q { width:100%; text-align:left; background:transparent; border:0; color:#e2e8f0; padding:.75rem 0; cursor:pointer; display:flex; gap:.5rem; align-items:center; }
+.faq .faq-a { max-height:0; overflow:hidden; transition:max-height .3s ease; color:$muted; padding-left:1.6rem; }
+
+.team-grid .member .avatar { width:72px; height:72px; border-radius:50%; background:#0e162b; margin-bottom:.35rem; box-shadow: 0 0 10px rgba(96,165,250,.25); }
+
+.about-cta { text-align:center; }
+
+.back-to-top { position: fixed; right: 18px; bottom: 18px; width:40px; height:40px; border-radius: 999px; border:0; background:#1f2937; color:#cbd5e1; display:none; align-items:center; justify-content:center; box-shadow: 0 6px 16px rgba(0,0,0,.25); }
+.back-to-top.show { display:flex; }
+
+@media (max-width: 900px) {
+  .grid.grid-4 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 640px) {
+  .grid.grid-4, .grid.grid-3 { grid-template-columns: 1fr; }
+  .about-hero { padding: 2rem 1rem; }
+}
