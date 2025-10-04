@@ -87,7 +87,7 @@
                 {% endif %}
               </div>
               <div class="actions">
-                <a class="btn" href="{{ url_for('offer_help') }}"><i class="fa-solid fa-handshake-angle"></i> Offer Help</a>
+                <a class="btn" href="{{ url_for('request_detail', request_id=r.id) }}"><i class="fa-solid fa-handshake-angle"></i> Offer Help</a>
               </div>
             </div>
           {% endfor %}

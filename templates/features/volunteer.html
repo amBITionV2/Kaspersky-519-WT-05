@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block content %}
+  <section class="vol-hero card">
+    <h2>Volunteer Opportunities</h2>
+    <p class="muted">Make a difference. Browse free community requests and lend a helping hand.</p>
+    <div class="vol-stats">
+      <div class="vol-stat"><span class="num">{{ stats.est_hours }}</span><span class="label">Estimated Hours Contributed</span></div>
+      <div class="vol-stat"><span class="num">{{ stats.people_helped }}</span><span class="label">People Helped</span></div>
+      <div class="vol-stat"><span class="num">{{ stats.active_volunteers }}</span><span class="label">Active Volunteers</span></div>
+    </div>
+  </section>
+
+  <div class="marketplace vol-theme">
+    <aside class="filters card">
+      <h3 style="margin-top:0;">Find a cause</h3>
+      <form method="get">
+        <div class="field">
+          <label>Category</label>
+          <select class="input" name="category">
+            <option value="">All</option>
+            {% for c in categories %}
+              <option value="{{ c }}" {% if filters.category == c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label>Location</label>
+          <input class="input" type="text" name="location" value="{{ filters.location }}" placeholder="City/Area" />
+        </div>
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Start Date</label>
+            <input class="input" type="date" name="start_date" value="{{ filters.start_date }}" />
+          </div>
+          <div class="field">
+            <label>End Date</label>
+            <input class="input" type="date" name="end_date" value="{{ filters.end_date }}" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Sort by</label>
+          <select class="input" name="sort">
+            <option value="newest" {% if filters.sort == 'newest' %}selected{% endif %}>Newest</option>
+            <option value="oldest" {% if filters.sort == 'oldest' %}selected{% endif %}>Oldest</option>
+          </select>
+        </div>
+        <div class="actions">
+          <button class="btn" type="submit"><i class="fa-solid fa-filter"></i> Apply</button>
+          <a class="btn secondary" href="{{ url_for('volunteer') }}">Reset</a>
+        </div>
+      </form>
+
+      <div class="cta">
+        <h4>Become a Volunteer</h4>
+        <p class="muted">Join our community of helpers. Share your skills, build connections, and create impact.</p>
+        <a class="btn" href="{{ url_for('signup') }}"><i class="fa-solid fa-hands-holding-heart"></i> Get Started</a>
+      </div>
+
+      <div class="testimonials">
+        <h4>What volunteers say</h4>
+        <div class="card"><em>“Helping at the weekend cleanup was fulfilling and fun!”</em></div>
+        <div class="card"><em>“I met wonderful people while tutoring students.”</em></div>
+      </div>
+    </aside>
+
+    <section class="results">
+      <div class="hero">
+        <h3>Featured urgent requests</h3>
+      </div>
+      {% if featured %}
+        <div class="grid-cards">
+          {% for r in featured %}
+            <div class="mp-card vol">
+              <h3>{{ r.title }}</h3>
+              <p class="muted">{{ r.description[:140] }}{% if r.description|length > 140 %}...{% endif %}</p>
+              <div class="mp-card__meta">
+                <span class="tag"><i class="fa-regular fa-folder"></i> {{ r.category or 'General' }}</span>
+                {% if r.location %}<span class="tag"><i class="fa-solid fa-location-dot"></i> {{ r.location }}</span>{% endif %}
+                {% if r.time_needed %}<span class="tag"><i class="fa-regular fa-clock"></i> {{ r.time_needed }}</span>{% endif %}
+                <span class="tag volunteer"><i class="fa-solid fa-hand-holding-heart"></i> Volunteer</span>
+              </div>
+              <div class="actions">
+                <a class="btn" href="{{ url_for('request_detail', request_id=r.id) }}">Offer Help</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="hero" style="margin-top:1rem;">
+        <h2>All Volunteer Requests</h2>
+      </div>
+      {% if items %}
+        <div class="grid-cards">
+          {% for r in items %}
+            <div class="mp-card vol">
+              <h3>{{ r.title }}</h3>
+              <p class="muted">{{ r.description[:160] }}{% if r.description|length > 160 %}...{% endif %}</p>
+              <div class="mp-card__meta">
+                <span class="tag"><i class="fa-regular fa-folder"></i> {{ r.category or 'General' }}</span>
+                {% if r.location %}<span class="tag"><i class="fa-solid fa-location-dot"></i> {{ r.location }}</span>{% endif %}
+                {% if r.time_needed %}<span class="tag"><i class="fa-regular fa-clock"></i> {{ r.time_needed }}</span>{% endif %}
+                <span class="tag volunteer"><i class="fa-solid fa-hand-holding-heart"></i> Volunteer</span>
+              </div>
+              <div class="actions">
+                <a class="btn" href="{{ url_for('request_detail', request_id=r.id) }}">Offer Help</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="pagination">
+          {% if pagination.has_prev %}
+            <a class="btn secondary" href="{{ url_for('volunteer', page=pagination.prev_num, **filters) }}">Previous</a>
+          {% else %}
+            <span class="btn secondary" style="opacity:.6; pointer-events:none;">Previous</span>
+          {% endif %}
+          <span class="muted">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+          {% if pagination.has_next %}
+            <a class="btn secondary" href="{{ url_for('volunteer', page=pagination.next_num, **filters) }}">Next</a>
+          {% else %}
+            <span class="btn secondary" style="opacity:.6; pointer-events:none;">Next</span>
+          {% endif %}
+        </div>
+      {% else %}
+        <div class="card" style="margin-top:1rem;">
+          <p class="muted">No volunteer requests found. Check back soon or broaden your filters.</p>
+        </div>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

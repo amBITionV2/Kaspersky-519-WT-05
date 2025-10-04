@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="hero">
+    <h2>My Offers</h2>
+    <p class="muted">Track your submitted offers and their statuses.</p>
+  </div>
+
+  <div class="offers">
+    <div class="offer-group card">
+      <h3>Pending <span class="badge">{{ badge_counts.pending }}</span></h3>
+      {% if grouped.pending %}
+        {% for o in grouped.pending %}
+          <div class="offer-card">
+            <div class="offer-card__head">
+              <strong>Request #{{ o.request_id }}</strong>
+              <span class="badge pending">Pending</span>
+            </div>
+            <p class="muted">{{ o.message[:160] }}{% if o.message|length > 160 %}...{% endif %}</p>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="muted">No pending offers.</p>
+      {% endif %}
+    </div>
+
+    <div class="offer-group card">
+      <h3>Accepted <span class="badge">{{ badge_counts.accepted }}</span></h3>
+      {% if grouped.accepted %}
+        {% for o in grouped.accepted %}
+          <div class="offer-card">
+            <div class="offer-card__head">
+              <strong>Request #{{ o.request_id }}</strong>
+              <span class="badge accepted">Accepted</span>
+            </div>
+            <p class="muted">{{ o.message[:160] }}{% if o.message|length > 160 %}...{% endif %}</p>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="muted">No accepted offers.</p>
+      {% endif %}
+    </div>
+
+    <div class="offer-group card">
+      <h3>Rejected <span class="badge">{{ badge_counts.rejected }}</span></h3>
+      {% if grouped.rejected %}
+        {% for o in grouped.rejected %}
+          <div class="offer-card">
+            <div class="offer-card__head">
+              <strong>Request #{{ o.request_id }}</strong>
+              <span class="badge rejected">Rejected</span>
+            </div>
+            <p class="muted">{{ o.message[:160] }}{% if o.message|length > 160 %}...{% endif %}</p>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="muted">No rejected offers.</p>
+      {% endif %}
+    </div>
+
+    <div class="offer-group card">
+      <h3>Completed <span class="badge">{{ badge_counts.completed }}</span></h3>
+      {% if grouped.completed %}
+        {% for o in grouped.completed %}
+          <div class="offer-card">
+            <div class="offer-card__head">
+              <strong>Request #{{ o.request_id }}</strong>
+              <span class="badge completed">Completed</span>
+            </div>
+            <p class="muted">{{ o.message[:160] }}{% if o.message|length > 160 %}...{% endif %}</p>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="muted">No completed tasks yet.</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

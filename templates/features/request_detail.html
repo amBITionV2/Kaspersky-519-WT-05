@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="grid grid-2">
+    <section class="card">
+      <div class="hero">
+        <h2>{{ req.title }}</h2>
+        <p class="muted">Posted {{ req.created_at.strftime('%Y-%m-%d %H:%M') }} · Category: {{ req.category or 'General' }}</p>
+      </div>
+
+      <div class="request-card__meta" style="margin:.25rem 0 1rem;">
+        {% if req.location %}<span class="tag"><i class="fa-solid fa-location-dot"></i> {{ req.location }}</span>{% endif %}
+        {% if req.time_needed %}<span class="tag"><i class="fa-regular fa-clock"></i> {{ req.time_needed }}</span>{% endif %}
+        {% if req.is_volunteer %}
+          <span class="tag volunteer"><i class="fa-solid fa-hand-holding-heart"></i> Volunteer</span>
+        {% elif req.price is not none %}
+          <span class="tag price"><i class="fa-solid fa-coins"></i> {{ '%.2f'|format(req.price) }}</span>
+        {% endif %}
+        <span class="badge {{ req.status }}">{{ req.status|capitalize }}</span>
+      </div>
+
+      <p>{{ req.description|replace('\n', '<br>')|safe }}</p>
+    </section>
+
+    <aside class="card">
+      <div class="mp-card__head">
+        <div class="avatar"></div>
+        <div>
+          <strong>{{ requester.full_name or requester.username }}</strong>
+          <div class="muted" style="font-size:.85rem;">Reputation: {{ '%.1f'|format(requester.reputation_score or 0) }}</div>
+        </div>
+      </div>
+
+      {% if my_offer %}
+        <div class="flash info" style="margin-top: .75rem;">You already submitted an offer. Current status: <strong>{{ my_offer.status|capitalize }}</strong></div>
+      {% endif %}
+
+      <h3 style="margin-top:1rem;">Offer your help</h3>
+      <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="field">
+          <label>Message to requester</label>
+          {{ form.message(class='input', rows='4', placeholder='Explain why you can help...') }}
+          {% for e in form.message.errors %}<div class="flash error">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="field" style="display:flex; align-items:center; gap:.6rem;">
+          {{ form.availability() }} <label style="margin:0">I am available and can start</label>
+        </div>
+        <div class="field">
+          <label>Expected completion timeframe</label>
+          {{ form.timeframe(class='input', placeholder='e.g., within 2 days') }}
+        </div>
+        <div class="actions">
+          {{ form.submit(class='btn', value='Submit Offer') }}
+        </div>
+      </form>
+    </aside>
+  </div>
+{% endblock %}

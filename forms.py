@@ -59,3 +59,10 @@ class RequestHelpForm(FlaskForm):
     skills_required = StringField("Skills required", validators=[Optional(), Length(max=200)])
     notes = TextAreaField("Additional notes", validators=[Optional(), Length(max=1000)])
     submit = SubmitField("Post Request")
+
+
+class OfferHelpForm(FlaskForm):
+    message = TextAreaField("Message to requester", validators=[DataRequired(), Length(min=5, max=2000)])
+    availability = BooleanField("I am available and can start")
+    timeframe = StringField("Expected completion timeframe", validators=[Optional(), Length(max=120)])
+    submit = SubmitField("Submit Offer")

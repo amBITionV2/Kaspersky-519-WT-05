@@ -1,0 +1,11 @@
+.offers { display:grid; gap: 1rem; }
+.offer-group { padding: 1rem; }
+.offer-group h3 { display:flex; align-items:center; gap:.5rem; margin-top:0; }
+
+.offer-card { @include card; margin:.6rem 0; }
+.offer-card__head { display:flex; align-items:center; justify-content:space-between; }
+
+.badge.pending { background: rgba(96,165,250,.12); border:1px solid rgba(96,165,250,.35); color:#bed8ff; border-radius:999px; padding:.2rem .5rem; }
+.badge.accepted { background: rgba(52,211,153,.12); border:1px solid rgba(52,211,153,.35); color:#b7f7dc; border-radius:999px; padding:.2rem .5rem; }
+.badge.rejected { background: rgba(248,113,113,.12); border:1px solid rgba(248,113,113,.35); color:#f3b0b0; border-radius:999px; padding:.2rem .5rem; }
+.badge.completed { background: rgba(251,191,36,.12); border:1px solid rgba(251,191,36,.35); color:#ffd78a; border-radius:999px; padding:.2rem .5rem; }

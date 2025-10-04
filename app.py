@@ -318,9 +318,106 @@ def create_app() -> Flask:
         return render_template("features/offer_help.html")
 
     @app.route("/volunteer")
-    @login_required
     def volunteer():
-        return render_template("features/volunteer.html")
+        from models import HelpRequest, HelpOffer
+        from sqlalchemy import func
+        from datetime import datetime, timedelta
+
+        # Base query: volunteer-only open requests
+        q = HelpRequest.query.filter(
+            HelpRequest.is_volunteer.is_(True), HelpRequest.status == "open"
+        )
+
+        # Filters
+        category = request.args.get("category", "").strip()
+        location_q = request.args.get("location", "").strip()
+        start_date = request.args.get("start_date", "").strip()
+        end_date = request.args.get("end_date", "").strip()
+        sort = request.args.get("sort", "newest")
+        page = int(request.args.get("page", 1) or 1)
+        per_page = 9
+
+        if category:
+            q = q.filter(HelpRequest.category == category)
+        if location_q:
+            q = q.filter(HelpRequest.location.ilike(f"%{location_q}%"))
+
+        def parse_date(s):
+            try:
+                return datetime.strptime(s, "%Y-%m-%d")
+            except Exception:
+                return None
+        sd = parse_date(start_date)
+        ed = parse_date(end_date)
+        if sd:
+            q = q.filter(HelpRequest.created_at >= sd)
+        if ed:
+            q = q.filter(HelpRequest.created_at < ed + timedelta(days=1))
+
+        # Featured urgent: oldest open volunteer requests (top 3)
+        featured = (
+            HelpRequest.query.filter(HelpRequest.is_volunteer.is_(True), HelpRequest.status == "open")
+            .order_by(HelpRequest.created_at.asc())
+            .limit(3)
+            .all()
+        )
+
+        # Sorting
+        if sort == "newest":
+            q = q.order_by(HelpRequest.created_at.desc())
+        else:
+            q = q.order_by(HelpRequest.created_at.asc())
+
+        pagination = q.paginate(page=page, per_page=per_page, error_out=False)
+        items = pagination.items
+
+        # Community impact stats (estimates)
+        completed_volunteer = (
+            HelpRequest.query.filter(HelpRequest.is_volunteer.is_(True), HelpRequest.status == "completed").count()
+        )
+        # Active volunteers = distinct helpers on accepted/completed offers for volunteer requests
+        active_volunteers = (
+            db.session.query(func.count(func.distinct(HelpOffer.helper_id)))
+            .join(HelpRequest, HelpOffer.request_id == HelpRequest.id)
+            .filter(
+                HelpRequest.is_volunteer.is_(True),
+                HelpOffer.status.in_(["accepted", "completed"]),
+            )
+            .scalar()
+            or 0
+        )
+        people_helped = completed_volunteer
+        est_hours = completed_volunteer * 2  # simple placeholder estimate
+
+        volunteer_categories = [
+            "Elderly Care",
+            "Community Cleanup",
+            "Teaching",
+            "Food Distribution",
+            "Animal Welfare",
+            "Healthcare Support",
+            "Other",
+        ]
+
+        return render_template(
+            "features/volunteer.html",
+            items=items,
+            featured=featured,
+            pagination=pagination,
+            stats={
+                "est_hours": est_hours,
+                "people_helped": people_helped,
+                "active_volunteers": active_volunteers,
+            },
+            filters={
+                "category": category,
+                "location": location_q,
+                "start_date": start_date,
+                "end_date": end_date,
+                "sort": sort,
+            },
+            categories=volunteer_categories,
+        )
 
     @app.route("/ngos")
     @login_required
@@ -424,6 +521,68 @@ def create_app() -> Flask:
                 "sort": sort,
             },
         )
+
+    @app.route("/requests/<int:request_id>", methods=["GET", "POST"])
+    @login_required
+    def request_detail(request_id: int):
+        from models import HelpRequest, User, HelpOffer
+        from forms import OfferHelpForm
+
+        req = HelpRequest.query.get_or_404(request_id)
+        requester = User.query.get(req.user_id)
+
+        form = OfferHelpForm()
+        if form.validate_on_submit():
+            msg = form.message.data
+            if form.availability.data:
+                msg += "\n\nAvailability: Can start."
+            if form.timeframe.data:
+                msg += f"\n\nTimeframe: {form.timeframe.data}"
+            offer = HelpOffer(
+                request_id=req.id,
+                helper_id=current_user.id,
+                message=msg,
+                status="pending",
+            )
+            db.session.add(offer)
+            db.session.commit()
+            flash("Offer submitted to the requester.", "success")
+            return redirect(url_for("request_detail", request_id=req.id))
+
+        if request.method == "POST" and form.errors:
+            for field, errs in form.errors.items():
+                for e in errs:
+                    flash(f"{field}: {e}", "error")
+
+        # Existing offers by current user for this request
+        my_offer = None
+        if current_user.is_authenticated:
+            my_offer = (
+                HelpOffer.query.filter_by(request_id=req.id, helper_id=current_user.id)
+                .order_by(HelpOffer.created_at.desc())
+                .first()
+            )
+
+        return render_template("features/request_detail.html", req=req, requester=requester, form=form, my_offer=my_offer)
+
+    @app.route("/my-offers")
+    @login_required
+    def my_offers():
+        from models import HelpOffer, HelpRequest
+
+        offers = (
+            HelpOffer.query.filter_by(helper_id=current_user.id)
+            .order_by(HelpOffer.created_at.desc())
+            .all()
+        )
+        grouped = {
+            "pending": [o for o in offers if o.status == "pending"],
+            "accepted": [o for o in offers if o.status == "accepted"],
+            "rejected": [o for o in offers if o.status == "rejected"],
+            "completed": [o for o in offers if o.status == "completed"],
+        }
+        badge_counts = {k: len(v) for k, v in grouped.items()}
+        return render_template("features/my_offers.html", grouped=grouped, badge_counts=badge_counts)
 
     # Error handlers
     @app.errorhandler(404)
