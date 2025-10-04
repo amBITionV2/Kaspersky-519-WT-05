@@ -12,6 +12,46 @@
   --border: #1f2937;
   --shadow: 0 10px 30px rgba(0,0,0,.35);
   --radius: 12px;
+  /* CSS Custom Properties for Theme Switching */
+  --bg-color: #0b1020;
+  --panel-color: #0f172a;
+  --text-color: #e2e8f0;
+  --text-muted: #9aa4b2;
+  --accent-color: #60a5fa;
+  --accent2-color: #22d3ee;
+  --danger-color: #f87171;
+  --warning-color: #fbbf24;
+  --success-color: #34d399;
+  --border-color: #1f2937;
+  --primary-color: #60a5fa;
+}
+
+/* Light theme variables */
+[data-theme="light"] {
+  --bg: #ffffff;
+  --panel: #f8fafc;
+  --muted: #64748b;
+  --fg: #1e293b;
+  --accent: #3b82f6;
+  --accent-2: #06b6d4;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --success: #10b981;
+  --border: #e2e8f0;
+  --shadow: 0 10px 30px rgba(0,0,0,.1);
+  --radius: 12px;
+  /* Light theme CSS custom properties */
+  --bg-color: #ffffff;
+  --panel-color: #f8fafc;
+  --text-color: #1e293b;
+  --text-muted: #64748b;
+  --accent-color: #3b82f6;
+  --accent2-color: #06b6d4;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+  --success-color: #10b981;
+  --border-color: #e2e8f0;
+  --primary-color: #3b82f6;
 }
 
 * { box-sizing: border-box; }
@@ -122,6 +162,175 @@ label { display:block; margin-bottom: .45rem; color: var(--muted); font-size: .9
 .site-footer { background: rgba(11,16,32,.65); border-top: 1px solid var(--border); margin-top: 2rem; }
 .site-footer small { color: var(--muted); }
 
-.auth-wrapper { max-width: 520px; margin: 1rem auto 0; }
-.actions { display: flex; align-items: center; gap: .8rem; }
-.actions a { color: var(--muted); }
+.cards {
+  margin-top: 1.25rem;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 1rem;
+}
+
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+  .cards-container {
+    grid-template-columns: repeat(3, minmax(200px, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .cards-container {
+    grid-template-columns: repeat(2, minmax(250px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .cards-container {
+    grid-template-columns: repeat(2, minmax(200px, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .cards-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+.card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  height: 100%;
+}
+
+.card.feature {
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  display: block;
+  height: 100%;
+  border-color: rgba(96,165,250,.25);
+  background: var(--panel);
+}
+
+.card.feature:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 30px rgba(0,0,0,.35);
+  border-color: rgba(34,211,238,.35);
+}
+
+.card.feature i {
+  font-size: 1.4rem;
+  margin-right: .6rem;
+  color: var(--accent);
+}
+
+.card.feature h3 {
+  margin: 0 0 .75rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  color: var(--fg);
+  font-size: 1.1rem;
+}
+
+/* Theme Toggle Button Styles */
+.theme-switch-container {
+  position: relative;
+}
+
+.theme-toggle.enhanced {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--panel);
+  border: 2px solid var(--border);
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.theme-toggle.enhanced:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.theme-toggle.enhanced .theme-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.theme-toggle.enhanced .theme-icons {
+  position: relative;
+  width: 16px;
+  height: 16px;
+}
+
+.theme-toggle.enhanced .theme-icon {
+  position: absolute;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle.enhanced .sun-icon {
+  color: #f59e0b;
+  opacity: 1;
+}
+
+.theme-toggle.enhanced .moon-icon {
+  color: #60a5fa;
+  opacity: 0.3;
+}
+
+.theme-toggle.enhanced .toggle-track {
+  position: relative;
+  width: 50px;
+  height: 24px;
+  background: var(--border);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle.enhanced .toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Light theme adjustments for toggle button */
+[data-theme="light"] .theme-toggle.enhanced .toggle-thumb {
+  left: 26px;
+}
+
+[data-theme="light"] .theme-toggle.enhanced .sun-icon {
+  opacity: 0.3;
+}
+
+[data-theme="light"] .theme-toggle.enhanced .moon-icon {
+  opacity: 1;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
