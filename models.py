@@ -163,6 +163,9 @@ class Statement(db.Model):
     block_id = db.Column(db.Integer, db.ForeignKey("blocks.id"), nullable=True, index=True)
     block = db.relationship("Block", back_populates="statements")
 
+    # User relationship
+    user = db.relationship("User", backref="statements")
+
     def __repr__(self) -> str:  # pragma: no cover
         return f"<Statement {self.kind} id={self.id} block={self.block_id}>"
 

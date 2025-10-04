@@ -38,3 +38,5 @@ Thumbs.db
 # Local development launcher scripts
 run_app.bat
 run_app.ps1
+run_migration.bat
+run_block1.bat

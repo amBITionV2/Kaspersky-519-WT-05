@@ -13,6 +13,37 @@ except Exception:  # pragma: no cover
     get_web3 = lambda: None  # type: ignore
 
 
+def _print_statement_details(st: Statement) -> None:
+    """Print detailed information about a statement."""
+    ts = st.created_at.strftime('%H:%M:%S') if st.created_at else 'n/a'
+
+    # Handle user information safely
+    try:
+        if st.user_id and hasattr(st, 'user') and st.user:
+            user_info = f"User: {st.user.username}"
+        else:
+            user_info = "Anonymous"
+    except Exception:
+        user_info = "Anonymous"
+
+    if st.kind == "http_request":
+        payload = st.payload or {}
+        print(f"    └─ {ts} HTTP {payload.get('method', 'UNKNOWN')} {payload.get('path', 'unknown')} - {user_info}")
+        print(f"        Query: {payload.get('query_string', '')}")
+        print(f"        From: {payload.get('remote_addr', 'unknown')}")
+    elif st.kind == "signup":
+        payload = st.payload or {}
+        print(f"    └─ {ts} Signup - {user_info} ({payload.get('email', 'unknown')})")
+    elif st.kind == "login":
+        payload = st.payload or {}
+        remember = " (remembered)" if payload.get("remember") else ""
+        print(f"    └─ {ts} Login{remember} - {user_info}")
+    elif st.kind == "logout":
+        print(f"    └─ {ts} Logout - {user_info}")
+    else:
+        print(f"    └─ {ts} {st.kind} - {user_info} - {st.payload}")
+
+
 def _print_history() -> int:
     """Print existing blocks with timestamps, return latest index or -1."""
     count = db.session.query(Block).count()
@@ -26,6 +57,9 @@ def _print_history() -> int:
         print(
             f"  - idx={blk.index} time={ts} hash={blk.hash[:12]}... prev={str(blk.prev_hash)[:12]}... statements={stmt_count}"
         )
+        # Print statement details for each block
+        for st in blk.statements:
+            _print_statement_details(st)
     latest = db.session.query(Block).order_by(Block.index.desc()).limit(1).one()
     return latest.index
 
@@ -48,6 +82,9 @@ def watch_internal(interval: float) -> None:
                     stmt_count = len(latest.statements)
                     ts = latest.created_at.strftime('%Y-%m-%d %H:%M:%S') if latest.created_at else 'n/a'
                     print(f"[internal] New block idx={latest.index} time={ts} hash={latest.hash[:12]}... prev={str(latest.prev_hash)[:12]}... statements={stmt_count} total_blocks={count}", flush=True)
+                    # Print detailed statements for the new block
+                    for st in latest.statements:
+                        _print_statement_details(st)
                     last_index = latest.index
                 time.sleep(interval)
             except KeyboardInterrupt:
