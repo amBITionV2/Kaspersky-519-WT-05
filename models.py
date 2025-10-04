@@ -20,6 +20,10 @@ class User(UserMixin, db.Model):
     is_blacklisted = db.Column(db.Boolean, nullable=False, default=False)
     reputation_score = db.Column(db.Float, nullable=False, default=0.0)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    # Profile
+    bio = db.Column(db.Text, nullable=True)
+    skills = db.Column(db.String(300), nullable=True)
+    avatar_url = db.Column(db.String(300), nullable=True)
 
     # Relationships
     help_requests = db.relationship("HelpRequest", back_populates="user", lazy=True)
@@ -144,3 +148,20 @@ class Statement(db.Model):
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<Statement {self.kind} id={self.id} block={self.block_id}>"
+
+
+class NGO(db.Model):
+    __tablename__ = "ngos"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    category = db.Column(db.String(100), nullable=True)
+    location = db.Column(db.String(200), nullable=True)
+    contact_email = db.Column(db.String(200), nullable=True)
+    website = db.Column(db.String(300), nullable=True)
+    verified_status = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<NGO {self.name} ({self.category})>"

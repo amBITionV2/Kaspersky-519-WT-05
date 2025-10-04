@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block content %}
+  <section class="profile card">
+    <div class="profile-head">
+      <div class="avatar" {% if profile_user.avatar_url %}style="background-image: url({{ profile_user.avatar_url|tojson }});"{% endif %}></div>
+      <div>
+        <h2 style="margin:0;">{{ profile_user.full_name or profile_user.username }}</h2>
+        <div class="muted">{{ profile_user.location or 'Unknown' }}</div>
+        <div class="rep">
+          <span class="stars">
+            {% set s = (profile_user.reputation_score or 0) // 20 %}
+            {% for i in range(0,5) %}
+              {% if i < s %}<i class="fa-solid fa-star"></i>{% else %}<i class="fa-regular fa-star"></i>{% endif %}
+            {% endfor %}
+          </span>
+          <span class="tier">{{ tier }}</span>
+        </div>
+        <div class="muted">Joined {{ profile_user.created_at.strftime('%Y-%m-%d') }}</div>
+      </div>
+    </div>
+    {% if profile_user.bio %}<p style="margin-top:1rem; white-space:pre-wrap;">{{ profile_user.bio }}</p>{% endif %}
+    {% if profile_user.skills %}<p><strong>Skills:</strong> {{ profile_user.skills }}</p>{% endif %}
+
+    <div class="grid grid-2" style="margin-top:1rem;">
+      <div class="card">
+        <h3>Stats</h3>
+        <ul>
+          <li>Tasks completed (as requester): {{ stats.requests_completed }}</li>
+          <li>Tasks completed (as helper): {{ stats.helps_completed }}</li>
+          <li>Success rate: {{ stats.success_rate }}%</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Contact</h3>
+        <ul>
+          <li>Email: {{ profile_user.email }}</li>
+          {% if profile_user.phone %}<li>Phone: {{ profile_user.phone }}</li>{% endif %}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" style="margin-top:1rem;">
+    <h3>Reviews</h3>
+    {% if reviews.items %}
+      <ul>
+        {% for r in reviews.items %}
+          <li>
+            <strong>Rating:</strong> {{ r.rating }} / 5
+            {% if r.comment %}<div class="muted">{{ r.comment }}</div>{% endif %}
+            <small class="muted">{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+          </li>
+        {% endfor %}
+      </ul>
+      <div class="pagination">
+        {% if reviews.has_prev %}
+          <a class="btn secondary" href="{{ url_for('profile_view', username=profile_user.username, page=reviews.prev_num) }}">Previous</a>
+        {% else %}
+          <span class="btn secondary" style="opacity:.6; pointer-events:none;">Previous</span>
+        {% endif %}
+        <span class="muted">Page {{ reviews.page }} of {{ reviews.pages }}</span>
+        {% if reviews.has_next %}
+          <a class="btn secondary" href="{{ url_for('profile_view', username=profile_user.username, page=reviews.next_num) }}">Next</a>
+        {% else %}
+          <span class="btn secondary" style="opacity:.6; pointer-events:none;">Next</span>
+        {% endif %}
+      </div>
+    {% else %}
+      <p class="muted">No reviews yet.</p>
+    {% endif %}
+  </section>
+{% endblock %}

@@ -1,0 +1,5 @@
+.profile-head { display:flex; gap: 1rem; align-items:center; }
+.profile .avatar { width: 72px; height:72px; border-radius:50%; background:#0e162b center/cover no-repeat; box-shadow: 0 0 16px rgba(96,165,250,.25); }
+.rep { display:flex; align-items:center; gap:.6rem; }
+.rep .stars i { color: #ffd78a; }
+.rep .tier { color: #b7f7dc; font-weight:700; }

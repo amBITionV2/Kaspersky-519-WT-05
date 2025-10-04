@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block content %}
+  <section class="card">
+    <div class="hero">
+      <h2>Edit Profile</h2>
+      <p class="muted">Update your public information. This helps requesters and helpers know you better.</p>
+    </div>
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="grid grid-2">
+        <div class="field">
+          <label>Full Name</label>
+          {{ form.full_name(class='input') }}
+        </div>
+        <div class="field">
+          <label>Phone</label>
+          {{ form.phone(class='input') }}
+        </div>
+      </div>
+      <div class="grid grid-2">
+        <div class="field">
+          <label>Location</label>
+          {{ form.location(class='input') }}
+        </div>
+        <div class="field">
+          <label>Profile Picture URL</label>
+          {{ form.avatar_url(class='input') }}
+        </div>
+      </div>
+      <div class="field">
+        <label>About</label>
+        {{ form.bio(class='input', rows='4') }}
+      </div>
+      <div class="field">
+        <label>Skills</label>
+        {{ form.skills(class='input', placeholder='e.g., carpentry, tutoring, first-aid') }}
+      </div>
+      <div class="actions">
+        {{ form.submit(class='btn', value='Save Changes') }}
+      </div>
+    </form>
+  </section>
+{% endblock %}

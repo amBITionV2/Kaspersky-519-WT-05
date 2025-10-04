@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="ngo-hero">
+    <h2>NGO Directory</h2>
+    <p class="muted">Discover and support trusted organizations creating real community impact.</p>
+    <div class="actions">
+      <a class="btn" href="{{ url_for('ngo_submit') }}"><i class="fa-solid fa-building-ngo"></i> Submit Your NGO</a>
+    </div>
+  </div>
+
+  <div class="marketplace ngo-theme">
+    <aside class="filters card">
+      <h3 style="margin-top:0;">Filter NGOs</h3>
+      <form method="get">
+        <div class="field">
+          <label>Category</label>
+          <select class="input" name="category">
+            <option value="">All</option>
+            {% for c in categories %}
+              <option value="{{ c }}" {% if filters.category == c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label>Location</label>
+          <input class="input" type="text" name="location" value="{{ filters.location }}" placeholder="City/Area" />
+        </div>
+        <div class="field">
+          <label>Sort by</label>
+          <select class="input" name="sort">
+            <option value="newest" {% if filters.sort == 'newest' %}selected{% endif %}>Newest</option>
+            <option value="name" {% if filters.sort == 'name' %}selected{% endif %}>Name A-Z</option>
+          </select>
+        </div>
+        <div class="actions">
+          <button class="btn" type="submit"><i class="fa-solid fa-filter"></i> Apply</button>
+          <a class="btn secondary" href="{{ url_for('ngos') }}">Reset</a>
+        </div>
+      </form>
+    </aside>
+
+    <section class="results">
+      <div class="hero">
+        <h2>Organizations</h2>
+      </div>
+
+      {% if items %}
+        <div class="grid-cards">
+          {% for n in items %}
+            <div class="ngo-card card">
+              <div class="ngo-head">
+                <div class="avatar"></div>
+                <div>
+                  <h3 style="margin:0;">{{ n.name }} {% if n.verified_status %}<span class="verified"><i class="fa-solid fa-circle-check"></i> Verified</span>{% endif %}</h3>
+                  <div class="muted" style="font-size:.9rem;">{{ n.category or 'General' }} · {{ n.location or 'Anywhere' }}</div>
+                </div>
+              </div>
+              <p class="muted">{{ n.description[:200] }}{% if n.description|length > 200 %}...{% endif %}</p>
+              <div class="actions">
+                <a class="btn" href="{{ url_for('ngo_detail', ngo_id=n.id) }}">Learn More</a>
+                {% if n.website %}<a class="btn secondary" href="{{ n.website }}" target="_blank" rel="noopener">Support</a>{% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="pagination">
+          {% if pagination.has_prev %}
+            <a class="btn secondary" href="{{ url_for('ngos', page=pagination.prev_num, **filters) }}">Previous</a>
+          {% else %}
+            <span class="btn secondary" style="opacity:.6; pointer-events:none;">Previous</span>
+          {% endif %}
+          <span class="muted">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+          {% if pagination.has_next %}
+            <a class="btn secondary" href="{{ url_for('ngos', page=pagination.next_num, **filters) }}">Next</a>
+          {% else %}
+            <span class="btn secondary" style="opacity:.6; pointer-events:none;">Next</span>
+          {% endif %}
+        </div>
+      {% else %}
+        <div class="card" style="margin-top:1rem;">
+          <p class="muted">No NGOs found. Try a different filter or check back later.</p>
+        </div>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

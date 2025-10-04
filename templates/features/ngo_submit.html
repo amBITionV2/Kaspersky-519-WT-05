@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block content %}
+  <section class="card">
+    <div class="hero">
+      <h2>Submit your NGO</h2>
+      <p class="muted">Share details about your organization. Our team will verify your submission before it goes live.</p>
+    </div>
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="field">
+        <label>NGO Name</label>
+        {{ form.name(class='input') }}
+        {% for e in form.name.errors %}<div class="flash error">{{ e }}</div>{% endfor %}
+      </div>
+      <div class="field">
+        <label>Description</label>
+        {{ form.description(class='input', rows='5') }}
+        {% for e in form.description.errors %}<div class="flash error">{{ e }}</div>{% endfor %}
+      </div>
+      <div class="grid grid-2">
+        <div class="field">
+          <label>Category</label>
+          {{ form.category(class='input') }}
+        </div>
+        <div class="field">
+          <label>Location</label>
+          {{ form.location(class='input') }}
+        </div>
+      </div>
+      <div class="grid grid-2">
+        <div class="field">
+          <label>Contact Email</label>
+          {{ form.contact_email(class='input') }}
+          {% for e in form.contact_email.errors %}<div class="flash error">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="field">
+          <label>Website</label>
+          {{ form.website(class='input', placeholder='https://...') }}
+        </div>
+      </div>
+      <div class="actions">
+        {{ form.submit(class='btn', value='Submit for Approval') }}
+      </div>
+    </form>
+  </section>
+{% endblock %}

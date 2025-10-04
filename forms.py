@@ -66,3 +66,36 @@ class OfferHelpForm(FlaskForm):
     availability = BooleanField("I am available and can start")
     timeframe = StringField("Expected completion timeframe", validators=[Optional(), Length(max=120)])
     submit = SubmitField("Submit Offer")
+
+
+class NGOForm(FlaskForm):
+    name = StringField("NGO Name", validators=[DataRequired(), Length(max=200)])
+    description = TextAreaField("Description", validators=[DataRequired(), Length(min=20)])
+    category = SelectField(
+        "Category",
+        choices=[
+            ("Education", "Education"),
+            ("Healthcare", "Healthcare"),
+            ("Environment", "Environment"),
+            ("Poverty Alleviation", "Poverty Alleviation"),
+            ("Animal Welfare", "Animal Welfare"),
+            ("Women & Children", "Women & Children"),
+            ("Disaster Relief", "Disaster Relief"),
+            ("Other", "Other"),
+        ],
+        validators=[Optional()],
+    )
+    location = StringField("Location", validators=[Optional(), Length(max=200)])
+    contact_email = StringField("Contact Email", validators=[Optional(), Email(), Length(max=200)])
+    website = StringField("Website", validators=[Optional(), Length(max=300)])
+    submit = SubmitField("Submit for Approval")
+
+
+class ProfileForm(FlaskForm):
+    full_name = StringField("Full Name", validators=[Optional(), Length(max=120)])
+    phone = StringField("Phone", validators=[Optional(), Length(max=50)])
+    location = StringField("Location", validators=[Optional(), Length(max=120)])
+    bio = TextAreaField("About", validators=[Optional(), Length(max=2000)])
+    skills = StringField("Skills", validators=[Optional(), Length(max=300)])
+    avatar_url = StringField("Profile Picture URL", validators=[Optional(), Length(max=300)])
+    submit = SubmitField("Save Changes")

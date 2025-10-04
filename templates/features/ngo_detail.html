@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+  <section class="card">
+    <div class="ngo-head">
+      <div class="avatar"></div>
+      <div>
+        <h2 style="margin:0;">{{ ngo.name }} {% if ngo.verified_status %}<span class="verified"><i class="fa-solid fa-circle-check"></i> Verified</span>{% endif %}</h2>
+        <div class="muted">{{ ngo.category or 'General' }} · {{ ngo.location or 'Anywhere' }}</div>
+      </div>
+    </div>
+    <p style="margin-top:1rem;">{{ ngo.description|replace('\n','<br>')|safe }}</p>
+    <div class="actions">
+      {% if ngo.website %}<a class="btn" href="{{ ngo.website }}" target="_blank" rel="noopener">Visit Website</a>{% endif %}
+      {% if ngo.contact_email %}<a class="btn secondary" href="mailto:{{ ngo.contact_email }}">Contact</a>{% endif %}
+    </div>
+  </section>
+
+  <section class="card" style="margin-top:1rem;">
+    <h3>Current Campaigns / Needs</h3>
+    <ul>
+      {% for c in campaigns %}
+        <li><strong>{{ c.title }}</strong> — {{ c.need }}</li>
+      {% endfor %}
+    </ul>
+
+    <h3>How to Help</h3>
+    <p class="muted">Volunteer your time, donate resources, or help raise awareness on social media.</p>
+  </section>
+{% endblock %}

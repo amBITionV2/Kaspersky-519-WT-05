@@ -1,0 +1,4 @@
+.ngo-hero { @include card; }
+.ngo-theme .ngo-card { border-color: rgba(96,165,250,.25); }
+.ngo-head { display:flex; align-items:center; gap:.75rem; }
+.verified { color:#b7f7dc; font-size:.9rem; }

@@ -420,9 +420,91 @@ def create_app() -> Flask:
         )
 
     @app.route("/ngos")
-    @login_required
     def ngos():
-        return render_template("features/ngos.html")
+        from models import NGO
+
+        q = NGO.query
+        category = request.args.get("category", "").strip()
+        location_q = request.args.get("location", "").strip()
+        sort = request.args.get("sort", "newest")
+        page = int(request.args.get("page", 1) or 1)
+        per_page = 9
+
+        if category:
+            q = q.filter(NGO.category == category)
+        if location_q:
+            q = q.filter(NGO.location.ilike(f"%{location_q}%"))
+
+        if sort == "newest":
+            q = q.order_by(NGO.created_at.desc())
+        else:
+            q = q.order_by(NGO.name.asc())
+
+        pagination = q.paginate(page=page, per_page=per_page, error_out=False)
+        items = pagination.items
+
+        categories = [
+            "Education",
+            "Healthcare",
+            "Environment",
+            "Poverty Alleviation",
+            "Animal Welfare",
+            "Women & Children",
+            "Disaster Relief",
+            "Other",
+        ]
+
+        return render_template(
+            "features/ngos.html",
+            items=items,
+            pagination=pagination,
+            categories=categories,
+            filters={
+                "category": category,
+                "location": location_q,
+                "sort": sort,
+            },
+        )
+
+    @app.route("/ngos/<int:ngo_id>")
+    def ngo_detail(ngo_id: int):
+        from models import NGO
+        ngo = NGO.query.get_or_404(ngo_id)
+        # Placeholder campaigns/needs
+        campaigns = [
+            {"title": "Monthly Food Drive", "need": "Volunteers for distribution"},
+            {"title": "School Supplies", "need": "Donations of notebooks and pens"},
+        ]
+        return render_template("features/ngo_detail.html", ngo=ngo, campaigns=campaigns)
+
+    @app.route("/ngos/submit", methods=["GET", "POST"])
+    @login_required
+    def ngo_submit():
+        from models import NGO
+        from forms import NGOForm
+
+        form = NGOForm()
+        if form.validate_on_submit():
+            ngo = NGO(
+                name=form.name.data,
+                description=form.description.data,
+                category=form.category.data or None,
+                location=form.location.data or None,
+                contact_email=form.contact_email.data or None,
+                website=form.website.data or None,
+                verified_status=False,
+            )
+            db.session.add(ngo)
+            db.session.commit()
+            flash("NGO submitted for approval. Our team will verify and publish it.", "success")
+            return redirect(url_for("ngos"))
+
+        if request.method == "POST" and form.errors:
+            for field, errs in form.errors.items():
+                for e in errs:
+                    flash(f"{field}: {e}", "error")
+
+        return render_template("features/ngo_submit.html", form=form)
 
     @app.route("/nearby")
     @login_required
@@ -583,6 +665,78 @@ def create_app() -> Flask:
         }
         badge_counts = {k: len(v) for k, v in grouped.items()}
         return render_template("features/my_offers.html", grouped=grouped, badge_counts=badge_counts)
+
+    # Profiles
+    @app.route("/u/<string:username>")
+    def profile_view(username: str):
+        from models import User, HelpRequest, HelpOffer, Review
+        user = User.query.filter_by(username=username).first_or_404()
+
+        # Stats
+        requests_completed = HelpRequest.query.filter_by(user_id=user.id, status="completed").count()
+        helps_completed = HelpOffer.query.filter_by(helper_id=user.id, status="completed").count()
+
+        # Success rate: completed offers / all offers (accepted or completed considered attempts)
+        total_offers_attempted = HelpOffer.query.filter(HelpOffer.helper_id == user.id, HelpOffer.status.in_(["accepted", "completed", "rejected"]))
+        total_offers_attempted_count = total_offers_attempted.count() or 0
+        success_rate = 0
+        if total_offers_attempted_count:
+            success_rate = int((helps_completed / total_offers_attempted_count) * 100)
+
+        # Reputation tier (simple mapping)
+        score = float(getattr(user, "reputation_score", 0.0) or 0.0)
+        if score >= 80:
+            tier = "Expert"
+        elif score >= 50:
+            tier = "Trusted"
+        elif score >= 20:
+            tier = "Helper"
+        else:
+            tier = "Beginner"
+
+        # Reviews received (paginated)
+        page = int(request.args.get("page", 1) or 1)
+        per_page = 5
+        reviews_q = Review.query.filter_by(reviewee_id=user.id).order_by(Review.created_at.desc())
+        reviews = reviews_q.paginate(page=page, per_page=per_page, error_out=False)
+
+        return render_template(
+            "profile/view.html",
+            profile_user=user,
+            stats={
+                "requests_completed": requests_completed,
+                "helps_completed": helps_completed,
+                "success_rate": success_rate,
+            },
+            tier=tier,
+            reviews=reviews,
+        )
+
+    @app.route("/settings/profile", methods=["GET", "POST"])
+    @login_required
+    def profile_edit():
+        from models import User
+        from forms import ProfileForm
+
+        user = current_user
+        form = ProfileForm(obj=user)
+        if form.validate_on_submit():
+            user.full_name = form.full_name.data or None
+            user.phone = form.phone.data or None
+            user.location = form.location.data or None
+            user.bio = form.bio.data or None
+            user.skills = form.skills.data or None
+            user.avatar_url = form.avatar_url.data or None
+            db.session.commit()
+            flash("Profile updated.", "success")
+            return redirect(url_for("profile_view", username=user.username))
+
+        if request.method == "POST" and form.errors:
+            for field, errs in form.errors.items():
+                for e in errs:
+                    flash(f"{field}: {e}", "error")
+
+        return render_template("profile/edit.html", form=form)
 
     # Error handlers
     @app.errorhandler(404)
