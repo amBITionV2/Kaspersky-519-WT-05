@@ -1,12 +1,6 @@
 from flask import Flask, render_template
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, AnonymousUserMixin
-from flask_wtf.csrf import CSRFProtect
-
-# Global extensions
-_db = SQLAlchemy()
-_login_manager = LoginManager()
-_csrf = CSRFProtect()
+from flask_login import AnonymousUserMixin
+from extensions import db, login_manager, csrf
 
 
 def create_app() -> Flask:
@@ -15,20 +9,26 @@ def create_app() -> Flask:
     app.config.from_object("config.Config")
 
     # Init extensions
-    _db.init_app(app)
-    _login_manager.init_app(app)
-    _csrf.init_app(app)
+    db.init_app(app)
+    login_manager.init_app(app)
+    csrf.init_app(app)
 
     # Minimal Flask-Login config: define anonymous user and a no-op loader
     class _AnonymousUser(AnonymousUserMixin):
         pass
 
-    _login_manager.anonymous_user = _AnonymousUser
+    login_manager.anonymous_user = _AnonymousUser
 
-    @_login_manager.user_loader
+    @login_manager.user_loader
     def load_user(user_id):  # noqa: ANN001
         # Return None to indicate no authenticated user yet
         return None
+
+    # Auto-create tables on first run
+    with app.app_context():
+        # Import models so SQLAlchemy is aware before create_all
+        import models  # noqa: F401
+        db.create_all()
 
     # Basic index route
     @app.route("/")
