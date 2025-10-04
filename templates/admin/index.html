@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block content %}
+  <section class="admin-hero admin-card">
+    <h2>Admin Dashboard</h2>
+    <p class="muted">Overview of platform health and recent activity.</p>
+  </section>
+
+  <div class="admin-grid">
+    <section class="admin-card">
+      <h3>Overview</h3>
+      <div class="admin-stats">
+        <div class="stat"><div class="num">{{ totals.users }}</div><div class="label">Users</div></div>
+        <div class="stat"><div class="num">{{ totals.requests }}</div><div class="label">Total Requests</div></div>
+        <div class="stat"><div class="num">{{ totals.open_requests }}</div><div class="label">Open</div></div>
+        <div class="stat"><div class="num">{{ totals.completed_requests }}</div><div class="label">Completed</div></div>
+        <div class="stat"><div class="num">{{ totals.flagged }}</div><div class="label">Flagged</div></div>
+      </div>
+      <div class="actions">
+        <a class="btn" href="{{ url_for('admin_users') }}">Manage Users</a>
+        <a class="btn secondary" href="{{ url_for('admin_moderation') }}">Moderation</a>
+      </div>
+    </section>
+
+    <section class="admin-card">
+      <h3>Recent Signups</h3>
+      {% if recent_signups %}
+        <table class="admin-table">
+          <thead><tr><th>User</th><th>Email</th><th>Joined</th></tr></thead>
+          <tbody>
+            {% for u in recent_signups %}
+              <tr>
+                <td><a href="{{ url_for('profile_view', username=u.username) }}">{{ u.username }}</a></td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="muted">No recent signups.</p>
+      {% endif %}
+    </section>
+
+    <section class="admin-card">
+      <h3>Activity Logs</h3>
+      {% if recent_activity %}
+        <table class="admin-table">
+          <thead><tr><th>Time</th><th>User</th><th>Kind</th><th>Payload</th></tr></thead>
+          <tbody>
+            {% for s in recent_activity %}
+              <tr>
+                <td>{{ s.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td>{{ s.user_id or '-' }}</td>
+                <td>{{ s.kind }}</td>
+                <td><code style="white-space: pre-wrap;">{{ s.payload }}</code></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="muted">No recent activity found.</p>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

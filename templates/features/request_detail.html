@@ -19,6 +19,33 @@
       </div>
 
       <p>{{ req.description|replace('\n', '<br>')|safe }}</p>
+
+      <div class="section" style="margin-top:1rem;">
+        <h3>Reviews</h3>
+        {% if request_reviews %}
+          <div class="reviews">
+            {% for rv in request_reviews %}
+              <div class="review-card">
+                <div class="review-head">
+                  <div class="avatar"></div>
+                  <div>
+                    <strong>{{ rv.reviewer.full_name or rv.reviewer.username }}</strong>
+                    <div class="stars" aria-label="{{ rv.rating }} stars">
+                      {% for i in range(0, rv.rating) %}<i class="fa-solid fa-star"></i>{% endfor %}
+                      {% for i in range(rv.rating, 5) %}<i class="fa-regular fa-star"></i>{% endfor %}
+                    </div>
+                    <small class="muted">{{ rv.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                  </div>
+                  <span class="badge" style="margin-left:auto;">Verified Task</span>
+                </div>
+                {% if rv.comment %}<p class="muted">{{ rv.comment }}</p>{% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="muted">No reviews for this task yet.</p>
+        {% endif %}
+      </div>
     </section>
 
     <aside class="card">
@@ -53,6 +80,25 @@
           {{ form.submit(class='btn', value='Submit Offer') }}
         </div>
       </form>
+
+      {% if can_review %}
+        <h3 style="margin-top:1rem;">Leave a review</h3>
+        <form method="post" novalidate>
+          {{ review_form.hidden_tag() }}
+          <div class="field">
+            <label>Rating</label>
+            {{ review_form.rating(class='input') }}
+            {% for e in review_form.rating.errors %}<div class="flash error">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="field">
+            <label>Review</label>
+            {{ review_form.comment(class='input', rows='3', placeholder='Share your experience...') }}
+          </div>
+          <div class="actions">
+            {{ review_form.submit(class='btn', value='Submit Review') }}
+          </div>
+        </form>
+      {% endif %}
     </aside>
   </div>
 {% endblock %}

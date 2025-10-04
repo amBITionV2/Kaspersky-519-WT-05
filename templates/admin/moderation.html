@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="admin-grid">
+    <section class="admin-card">
+      <h2>Flagged Content</h2>
+      {% if flags %}
+        <table class="admin-table">
+          <thead><tr><th>ID</th><th>Type</th><th>Content ID</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            {% for f in flags %}
+              <tr>
+                <td>#{{ f.id }}</td>
+                <td>{{ f.content_type }}</td>
+                <td>{{ f.content_id }}</td>
+                <td>{{ f.reason or '-' }}</td>
+                <td>{{ f.status }}</td>
+                <td class="action-cell">
+                  <form method="post" action="{{ url_for('admin_flag_action', flag_id=f.id, action='approve') }}" style="display:inline;">
+                    <button class="btn small" type="submit">Approve</button>
+                  </form>
+                  <form method="post" action="{{ url_for('admin_flag_action', flag_id=f.id, action='reject') }}" style="display:inline;">
+                    <button class="btn danger small" type="submit">Reject</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="muted">No flags pending.</p>
+      {% endif %}
+    </section>
+
+    <section class="admin-card">
+      <h2>NGO Submissions</h2>
+      {% if pending_ngos %}
+        <table class="admin-table">
+          <thead><tr><th>Name</th><th>Category</th><th>Location</th><th>Submitted</th><th>Actions</th></tr></thead>
+          <tbody>
+            {% for n in pending_ngos %}
+              <tr>
+                <td>{{ n.name }}</td>
+                <td>{{ n.category or 'General' }}</td>
+                <td>{{ n.location or '-' }}</td>
+                <td>{{ n.created_at.strftime('%Y-%m-%d') }}</td>
+                <td class="action-cell">
+                  <a class="btn small" href="{{ url_for('ngo_detail', ngo_id=n.id) }}">View</a>
+                  <form method="post" action="{{ url_for('admin_verify_ngo', ngo_id=n.id) }}" style="display:inline;">
+                    <button class="btn small" type="submit">Verify</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="muted">No NGO submissions pending.</p>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

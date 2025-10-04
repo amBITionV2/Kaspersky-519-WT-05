@@ -1,0 +1,16 @@
+.admin-hero { @include card; background: linear-gradient(135deg, rgba(96,165,250,.12), rgba(34,197,94,.08)); }
+.admin-grid { display:grid; gap:1rem; grid-template-columns: 1fr; }
+.admin-card { @include card; }
+.admin-stats { display:grid; gap:.75rem; grid-template-columns: repeat(5, minmax(0,1fr)); }
+.admin-stats .stat { @include card; text-align:center; }
+.admin-stats .num { font-size:1.4rem; font-weight:800; color:#b7f7dc; }
+.admin-stats .label { color:$muted; }
+
+.admin-table { width:100%; border-collapse: collapse; }
+.admin-table th, .admin-table td { border:1px solid $border; padding:.5rem .6rem; }
+.admin-table thead th { background:#101826; color:#cbd5e1; text-align:left; }
+.action-cell > form { margin-right:.35rem; }
+.btn.small { padding:.3rem .6rem; font-size:.85rem; }
+.btn.danger { background:#b91c1c; }
+
+.admin-search { display:flex; gap:.5rem; margin:.5rem 0 1rem; }

@@ -10,6 +10,7 @@ from wtforms import (
 )
 from wtforms.fields.datetime import DateTimeLocalField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional
+from wtforms.validators import NumberRange
 
 
 class SignUpForm(FlaskForm):
@@ -99,3 +100,13 @@ class ProfileForm(FlaskForm):
     skills = StringField("Skills", validators=[Optional(), Length(max=300)])
     avatar_url = StringField("Profile Picture URL", validators=[Optional(), Length(max=300)])
     submit = SubmitField("Save Changes")
+
+
+class ReviewForm(FlaskForm):
+    rating = SelectField(
+        "Rating",
+        choices=[("5", "★★★★★"), ("4", "★★★★"), ("3", "★★★"), ("2", "★★"), ("1", "★")],
+        validators=[DataRequired()],
+    )
+    comment = TextAreaField("Review", validators=[Optional(), Length(max=2000)])
+    submit = SubmitField("Submit Review")

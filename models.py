@@ -18,6 +18,7 @@ class User(UserMixin, db.Model):
     location = db.Column(db.String(120), nullable=True)
     user_type = db.Column(db.String(20), nullable=False, default="user")  # admin/user
     is_blacklisted = db.Column(db.Boolean, nullable=False, default=False)
+    blacklist_reason = db.Column(db.String(300), nullable=True)
     reputation_score = db.Column(db.Float, nullable=False, default=0.0)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     # Profile
@@ -111,6 +112,20 @@ class Review(db.Model):
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<Review {self.id} on request {self.request_id} {self.reviewer_id}->{self.reviewee_id}>"
+
+
+class Flag(db.Model):
+    __tablename__ = "flags"
+
+    id = db.Column(db.Integer, primary_key=True)
+    content_type = db.Column(db.String(50), nullable=False)  # request/review
+    content_id = db.Column(db.Integer, nullable=False)
+    reason = db.Column(db.String(300), nullable=True)
+    status = db.Column(db.String(20), nullable=False, default="pending")  # pending/approved/rejected
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Flag {self.content_type}:{self.content_id} {self.status}>"
 
 
 # -----------------------------

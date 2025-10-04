@@ -1,0 +1,6 @@
+.reviews { display: grid; gap: .75rem; }
+.review-card { @include card; }
+.review-head { display:flex; align-items:flex-start; gap:.6rem; }
+.review-head .avatar { width:32px; height:32px; border-radius:50%; background:#0e162b; box-shadow: 0 0 10px rgba(96,165,250,.25); }
+.stars i.fa-solid { color:#ffd78a; }
+.stars i.fa-regular { color:#556; }

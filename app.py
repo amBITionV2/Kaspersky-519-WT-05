@@ -38,6 +38,20 @@ def create_app() -> Flask:
     login_manager.anonymous_user = _AnonymousUser
     login_manager.login_view = "login"
 
+    # ------------------
+    # Admin utilities
+    # ------------------
+    from functools import wraps
+
+    def admin_required(view_func):
+        @wraps(view_func)
+        def _wrapped(*args, **kwargs):
+            if not current_user.is_authenticated or getattr(current_user, "user_type", "user") != "admin":
+                flash("Admin access required.", "error")
+                return redirect(url_for("dashboard"))
+            return view_func(*args, **kwargs)
+        return _wrapped
+
     @login_manager.user_loader
     def load_user(user_id):  # noqa: ANN001
         # Lazy import to avoid circular imports
@@ -252,13 +266,7 @@ def create_app() -> Flask:
             },
         )
 
-    @app.route("/admin")
-    @login_required
-    def admin():
-        if getattr(current_user, "user_type", "user") != "admin":
-            flash("Admin access required.", "error")
-            return redirect(url_for("dashboard"))
-        return render_template("admin.html")
+    
 
     @app.route("/post-login-redirect")
     @login_required
@@ -273,6 +281,10 @@ def create_app() -> Flask:
     def request_help():
         from models import HelpRequest
         from forms import RequestHelpForm
+
+        if getattr(current_user, "is_blacklisted", False):
+            flash("Your account is blacklisted. You cannot create requests.", "error")
+            return redirect(url_for("dashboard"))
 
         form = RequestHelpForm()
         if form.validate_on_submit():
@@ -607,19 +619,25 @@ def create_app() -> Flask:
     @app.route("/requests/<int:request_id>", methods=["GET", "POST"])
     @login_required
     def request_detail(request_id: int):
-        from models import HelpRequest, User, HelpOffer
-        from forms import OfferHelpForm
+        from models import HelpRequest, User, HelpOffer, Review
+        from forms import OfferHelpForm, ReviewForm
 
         req = HelpRequest.query.get_or_404(request_id)
         requester = User.query.get(req.user_id)
 
-        form = OfferHelpForm()
-        if form.validate_on_submit():
-            msg = form.message.data
-            if form.availability.data:
+        offer_form = OfferHelpForm()
+        review_form = ReviewForm()
+
+        # Handle offer submit
+        if getattr(current_user, "is_blacklisted", False) and offer_form.submit.data:
+            flash("Your account is blacklisted. You cannot submit offers.", "error")
+            return redirect(url_for("request_detail", request_id=req.id))
+        if offer_form.submit.data and offer_form.validate_on_submit():
+            msg = offer_form.message.data
+            if offer_form.availability.data:
                 msg += "\n\nAvailability: Can start."
-            if form.timeframe.data:
-                msg += f"\n\nTimeframe: {form.timeframe.data}"
+            if offer_form.timeframe.data:
+                msg += f"\n\nTimeframe: {offer_form.timeframe.data}"
             offer = HelpOffer(
                 request_id=req.id,
                 helper_id=current_user.id,
@@ -631,8 +649,64 @@ def create_app() -> Flask:
             flash("Offer submitted to the requester.", "success")
             return redirect(url_for("request_detail", request_id=req.id))
 
-        if request.method == "POST" and form.errors:
-            for field, errs in form.errors.items():
+        # Handle review submit (only for completed tasks and participants)
+        if review_form.submit.data and review_form.validate_on_submit():
+            # Only allow reviews when a completed offer exists for this request
+            completed = (
+                HelpOffer.query.filter_by(request_id=req.id, status="completed").first()
+            )
+            if not completed or req.status != "completed":
+                flash("Reviews are only allowed for completed tasks.", "error")
+                return redirect(url_for("request_detail", request_id=req.id))
+
+            # Determine counterpart
+            if current_user.id == req.user_id:
+                reviewee_id = completed.helper_id
+            elif current_user.id == completed.helper_id:
+                reviewee_id = req.user_id
+            else:
+                flash("You are not a participant in this task.", "error")
+                return redirect(url_for("request_detail", request_id=req.id))
+
+            # Prevent duplicate per task per reviewer
+            exists = (
+                Review.query.filter_by(request_id=req.id, reviewer_id=current_user.id).first()
+            )
+            if exists:
+                flash("You have already reviewed this task.", "error")
+                return redirect(url_for("request_detail", request_id=req.id))
+
+            rating = int(review_form.rating.data)
+            comment = (review_form.comment.data or "").strip()
+            rv = Review(
+                request_id=req.id,
+                reviewer_id=current_user.id,
+                reviewee_id=reviewee_id,
+                rating=rating,
+                comment=comment or None,
+            )
+            db.session.add(rv)
+
+            # Simple reputation update for the reviewee
+            reviewee = User.query.get(reviewee_id)
+            if reviewee is not None:
+                delta = rating * 3
+                if rating == 5:
+                    delta += 2
+                if rating <= 2:
+                    delta -= 5
+                new_score = max(0.0, min(100.0, float(reviewee.reputation_score or 0.0) + delta))
+                reviewee.reputation_score = new_score
+
+            db.session.commit()
+            flash("Review submitted.", "success")
+            return redirect(url_for("request_detail", request_id=req.id))
+
+        if request.method == "POST" and (offer_form.errors or review_form.errors):
+            for field, errs in offer_form.errors.items():
+                for e in errs:
+                    flash(f"{field}: {e}", "error")
+            for field, errs in review_form.errors.items():
                 for e in errs:
                     flash(f"{field}: {e}", "error")
 
@@ -645,7 +719,33 @@ def create_app() -> Flask:
                 .first()
             )
 
-        return render_template("features/request_detail.html", req=req, requester=requester, form=form, my_offer=my_offer)
+        # Reviews for this request
+        request_reviews = Review.query.filter_by(request_id=req.id).order_by(Review.created_at.desc()).all()
+
+        # Eligibility to review
+        can_review = False
+        if req.status == "completed":
+            completed_offer = HelpOffer.query.filter_by(request_id=req.id, status="completed").first()
+            if completed_offer and (
+                current_user.id in (req.user_id, completed_offer.helper_id)
+            ):
+                already = (
+                    db.session.query(Review.id)
+                    .filter_by(request_id=req.id, reviewer_id=current_user.id)
+                    .first()
+                )
+                can_review = already is None
+
+        return render_template(
+            "features/request_detail.html",
+            req=req,
+            requester=requester,
+            form=offer_form,
+            review_form=review_form,
+            my_offer=my_offer,
+            request_reviews=request_reviews,
+            can_review=can_review,
+        )
 
     @app.route("/my-offers")
     @login_required
@@ -665,6 +765,123 @@ def create_app() -> Flask:
         }
         badge_counts = {k: len(v) for k, v in grouped.items()}
         return render_template("features/my_offers.html", grouped=grouped, badge_counts=badge_counts)
+
+    # ------------------
+    # Admin: dashboard & users
+    # ------------------
+    @app.route("/admin")
+    @login_required
+    @admin_required
+    def admin():
+        from models import User, HelpRequest, Flag, NGO, Statement
+        total_users = db.session.query(User).count()
+        total_requests = db.session.query(HelpRequest).count()
+        open_requests = db.session.query(HelpRequest).filter_by(status="open").count()
+        completed_requests = db.session.query(HelpRequest).filter_by(status="completed").count()
+        flagged_pending = db.session.query(Flag).filter_by(status="pending").count()
+        recent_signups = User.query.order_by(User.created_at.desc()).limit(8).all()
+        recent_activity = (
+            Statement.query.order_by(Statement.created_at.desc()).limit(12).all()
+        )
+        return render_template(
+            "admin/index.html",
+            totals={
+                "users": total_users,
+                "requests": total_requests,
+                "open_requests": open_requests,
+                "completed_requests": completed_requests,
+                "flagged": flagged_pending,
+            },
+            recent_signups=recent_signups,
+            recent_activity=recent_activity,
+        )
+
+    @app.route("/admin/users")
+    @login_required
+    @admin_required
+    def admin_users():
+        from models import User
+        q = request.args.get("q", "").strip()
+        page = int(request.args.get("page", 1) or 1)
+        per_page = 20
+        query = User.query
+        if q:
+            like = f"%{q}%"
+            query = query.filter((User.username.ilike(like)) | (User.email.ilike(like)) | (User.full_name.ilike(like)))
+        users = query.order_by(User.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
+        return render_template("admin/users.html", users=users, q=q)
+
+    @app.post("/admin/users/<int:user_id>/blacklist")
+    @login_required
+    @admin_required
+    def admin_blacklist_user(user_id: int):
+        from models import User
+        reason = (request.form.get("reason") or "").strip() or None
+        u = User.query.get_or_404(user_id)
+        u.is_blacklisted = True
+        u.blacklist_reason = reason
+        db.session.commit()
+        flash("User blacklisted.", "success")
+        return redirect(url_for("admin_users"))
+
+    @app.post("/admin/users/<int:user_id>/unblacklist")
+    @login_required
+    @admin_required
+    def admin_unblacklist_user(user_id: int):
+        from models import User
+        u = User.query.get_or_404(user_id)
+        u.is_blacklisted = False
+        u.blacklist_reason = None
+        db.session.commit()
+        flash("User unblacklisted.", "success")
+        return redirect(url_for("admin_users"))
+
+    @app.post("/admin/users/<int:user_id>/delete")
+    @login_required
+    @admin_required
+    def admin_delete_user(user_id: int):
+        from models import User
+        u = User.query.get_or_404(user_id)
+        db.session.delete(u)
+        db.session.commit()
+        flash("User deleted.", "success")
+        return redirect(url_for("admin_users"))
+
+    # ------------------
+    # Admin: moderation (flags and NGO approvals)
+    # ------------------
+    @app.route("/admin/moderation")
+    @login_required
+    @admin_required
+    def admin_moderation():
+        from models import Flag, NGO
+        flags = Flag.query.order_by(Flag.created_at.desc()).limit(50).all()
+        pending_ngos = NGO.query.filter_by(verified_status=False).order_by(NGO.created_at.desc()).all()
+        return render_template("admin/moderation.html", flags=flags, pending_ngos=pending_ngos)
+
+    @app.post("/admin/flags/<int:flag_id>/<string:action>")
+    @login_required
+    @admin_required
+    def admin_flag_action(flag_id: int, action: str):
+        from models import Flag
+        fl = Flag.query.get_or_404(flag_id)
+        if action not in ("approve", "reject"):
+            abort(400)
+        fl.status = "approved" if action == "approve" else "rejected"
+        db.session.commit()
+        flash("Flag updated.", "success")
+        return redirect(url_for("admin_moderation"))
+
+    @app.post("/admin/ngos/<int:ngo_id>/verify")
+    @login_required
+    @admin_required
+    def admin_verify_ngo(ngo_id: int):
+        from models import NGO
+        n = NGO.query.get_or_404(ngo_id)
+        n.verified_status = True
+        db.session.commit()
+        flash("NGO verified.", "success")
+        return redirect(url_for("admin_moderation"))
 
     # Profiles
     @app.route("/u/<string:username>")

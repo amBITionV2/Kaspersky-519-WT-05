@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block content %}
+  <section class="admin-card">
+    <h2>User Management</h2>
+    <form method="get" class="admin-search">
+      <input class="input" type="text" name="q" placeholder="Search username, email, name" value="{{ q }}" />
+      <button class="btn" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+    </form>
+
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Email</th>
+          <th>Joined</th>
+          <th>Reputation</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users.items %}
+          <tr>
+            <td><a href="{{ url_for('profile_view', username=u.username) }}">{{ u.username }}</a></td>
+            <td>{{ u.email }}</td>
+            <td>{{ u.created_at.strftime('%Y-%m-%d') }}</td>
+            <td>{{ '%.1f'|format(u.reputation_score or 0) }}</td>
+            <td>
+              {% if u.is_blacklisted %}
+                <span class="badge rejected">Blacklisted</span>
+                {% if u.blacklist_reason %}<div class="muted">{{ u.blacklist_reason }}</div>{% endif %}
+              {% else %}
+                <span class="badge accepted">Active</span>
+              {% endif %}
+            </td>
+            <td class="action-cell">
+              <a class="btn small" href="{{ url_for('profile_view', username=u.username) }}">View</a>
+              {% if not u.is_blacklisted %}
+                <form method="post" action="{{ url_for('admin_blacklist_user', user_id=u.id) }}" style="display:inline;">
+                  <input class="input" type="text" name="reason" placeholder="Reason (optional)" />
+                  <button class="btn danger small" type="submit">Blacklist</button>
+                </form>
+              {% else %}
+                <form method="post" action="{{ url_for('admin_unblacklist_user', user_id=u.id) }}" style="display:inline;">
+                  <button class="btn small" type="submit">Unblacklist</button>
+                </form>
+              {% endif %}
+              <form method="post" action="{{ url_for('admin_delete_user', user_id=u.id) }}" style="display:inline;" onsubmit="return confirm('Delete user? This cannot be undone.');">
+                <button class="btn danger small" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="pagination">
+      {% if users.has_prev %}
+        <a class="btn secondary" href="{{ url_for('admin_users', page=users.prev_num, q=q) }}">Previous</a>
+      {% else %}
+        <span class="btn secondary" style="opacity:.6; pointer-events:none;">Previous</span>
+      {% endif %}
+      <span class="muted">Page {{ users.page }} of {{ users.pages }}</span>
+      {% if users.has_next %}
+        <a class="btn secondary" href="{{ url_for('admin_users', page=users.next_num, q=q) }}">Next</a>
+      {% else %}
+        <span class="btn secondary" style="opacity:.6; pointer-events:none;">Next</span>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}
