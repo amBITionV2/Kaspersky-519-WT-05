@@ -4,10 +4,10 @@ __pycache__/
 *$py.class
 
 # Virtual environments
-.venv/
-venv/
-ENV/
-env/
+#.venv/
+#venv/
+#ENV/
+#env/
 
 # VSCode / IDE
 .vscode/
@@ -35,5 +35,6 @@ app.db
 .DS_Store
 Thumbs.db
 
-# Local environment folders (kept for deployment per README)
-# Do NOT ignore myenv/
+# Local development launcher scripts
+run_app.bat
+run_app.ps1
