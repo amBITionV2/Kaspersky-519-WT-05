@@ -1,0 +1,23 @@
+.site-header {
+  position: sticky;
+  top: 0; z-index: 10;
+  background: rgba(11, 16, 32, 0.7);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid $border;
+}
+.site-header .container { display:flex; align-items:center; justify-content:space-between; }
+.brand { display:flex; gap:.6rem; align-items:center; }
+.brand a { color:$fg; text-decoration:none; font-weight:700; letter-spacing:.3px; }
+.brand .dot { width:10px; height:10px; border-radius:50%; background: linear-gradient(135deg, $accent, $accent2); box-shadow: 0 0 20px rgba(96,165,250,.6); }
+
+.nav-links { display:flex; align-items:center; gap:1rem; }
+.nav-links a { color:$muted; text-decoration:none; font-weight:500; }
+.nav-links a:hover { color:$fg; }
+
+.hamburger { display:none; background:none; border:none; color:$fg; font-size:1.25rem; }
+
+@media (max-width: $bp-md) {
+  .nav-links { display:none; position:absolute; top:60px; right:1rem; left:1rem; flex-direction:column; background:$panel; border:1px solid $border; border-radius:$radius; padding: .75rem; }
+  .nav-links.open { display:flex; }
+  .hamburger { display:block; }
+}

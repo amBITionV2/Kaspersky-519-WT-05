@@ -1,0 +1,21 @@
+// Color palette (community help theme)
+$bg: #0b1020;
+$panel: #0f172a;
+$muted: #9aa4b2;
+$fg: #e2e8f0;
+$accent: #60a5fa;   // blue
+$accent2: #22d3ee;  // cyan
+$danger: #f87171;   // red
+$warning: #fbbf24;  // amber
+$success: #34d399;  // green
+$border: #1f2937;
+$shadow: 0 10px 30px rgba(0,0,0,.35);
+$radius: 12px;
+
+// Typography
+$font-stack: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+
+// Breakpoints
+$bp-sm: 480px;
+$bp-md: 768px;
+$bp-lg: 1024px;

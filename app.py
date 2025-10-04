@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, flash, abort
+from flask import Flask, render_template, redirect, url_for, flash, abort, request
 from flask_login import (
     AnonymousUserMixin,
     login_required,
@@ -7,17 +7,23 @@ from flask_login import (
     current_user,
 )
 from extensions import db, login_manager, csrf
+from flask_scss import Scss
 
 
 def create_app() -> Flask:
     """Application factory."""
     app = Flask(__name__, static_folder="static", template_folder="templates")
     app.config.from_object("config.Config")
+    # SCSS configuration
+    app.config.setdefault("SCSS_ASSET_DIR", "assets/scss")
+    app.config.setdefault("STATIC_ASSET_DIR", "static/css")
 
     # Init extensions
     db.init_app(app)
     login_manager.init_app(app)
     csrf.init_app(app)
+    # Initialize SCSS compiler
+    Scss(app, static_dir=app.config["STATIC_ASSET_DIR"], asset_dir=app.config["SCSS_ASSET_DIR"])
 
     # Flask-Login config
     class _AnonymousUser(AnonymousUserMixin):
@@ -43,8 +49,13 @@ def create_app() -> Flask:
 
     # Basic index route
     @app.route("/")
+    @login_required
     def index():
         return render_template("index.html")
+
+    @app.route("/about")
+    def about():
+        return render_template("about.html")
 
     # Auth routes
     @app.route("/signup", methods=["GET", "POST"])
@@ -77,6 +88,11 @@ def create_app() -> Flask:
             flash("Account created. Please log in.", "success")
             return redirect(url_for("login"))
 
+        # If POST with errors, surface them
+        if request.method == "POST" and form.errors:
+            for field, errs in form.errors.items():
+                for e in errs:
+                    flash(f"{field}: {e}", "error")
         return render_template("auth/signup.html", form=form)
 
     @app.route("/login", methods=["GET", "POST"])
@@ -95,6 +111,11 @@ def create_app() -> Flask:
                 flash("Logged in successfully.", "success")
                 return redirect(url_for("post_login_redirect"))
             flash("Invalid email or password.", "error")
+        # If POST with errors, surface them
+        if request.method == "POST" and form.errors:
+            for field, errs in form.errors.items():
+                for e in errs:
+                    flash(f"{field}: {e}", "error")
         return render_template("auth/login.html", form=form)
 
     @app.route("/logout")

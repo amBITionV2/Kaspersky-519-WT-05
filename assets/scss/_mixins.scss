@@ -1,0 +1,19 @@
+@mixin card {
+  background: linear-gradient(180deg, rgba(240, 247, 255, 0.02), rgba(255, 255, 255, 0.0)), $panel;
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 1.25rem;
+  box-shadow: $shadow;
+}
+
+@mixin focus-ring($color) {
+  outline: none;
+  border-color: $color;
+  box-shadow: 0 0 0 3px rgba($color, .25);
+}
+
+@mixin container {
+  width: min(92%, 1000px);
+  margin: 0 auto;
+  padding: 1.25rem;
+}

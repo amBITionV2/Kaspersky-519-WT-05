@@ -1,0 +1,65 @@
+@import 'variables';
+@import 'mixins';
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: $font-stack;
+  background: radial-gradient(1200px 600px at 10% -10%, rgba(34,211,238,.12), transparent 60%),
+              radial-gradient(1200px 600px at 110% 10%, rgba(96,165,250,.10), transparent 60%),
+              $bg;
+  color: $fg;
+  line-height: 1.6;
+}
+
+.container { @include container; }
+
+h1, h2, h3 { color: $fg; letter-spacing: .2px; }
+.muted { color: $muted; }
+
+.btn {
+  display: inline-block;
+  padding: .65rem 1rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, $accent, $accent2);
+  color: #0b1020;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(96,165,250,.25);
+  &:hover { filter: brightness(1.05); }
+  &.secondary { background: #101826; color: $fg; border: 1px solid $border; box-shadow: none; }
+}
+
+.field { margin-bottom: 1rem; }
+label { display:block; margin-bottom: .45rem; color: $muted; font-size: .95rem; }
+.input, input[type="text"], input[type="email"], input[type="password"], textarea, select {
+  width: 100%;
+  background: #0e162b;
+  color: $fg;
+  border: 1px solid #1f2a44;
+  border-radius: 10px;
+  padding: .7rem .9rem;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+  &:focus { @include focus-ring($accent); }
+}
+
+.grid { display: grid; gap: 1.25rem; }
+.grid-2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+@media (max-width: $bp-md) { .grid-2 { grid-template-columns: 1fr; } }
+
+.flashes { margin-bottom: 1rem; }
+.flash { padding: .75rem 1rem; border-radius: 10px; border: 1px solid $border; margin-bottom: .6rem; }
+.flash.success { background: rgba(52,211,153, .1); border-color: rgba(52,211,153, .3); color: #b7f7dc; }
+.flash.error { background: rgba(248,113,113, .08); border-color: rgba(248,113,113, .3); color: #f3b0b0; }
+.flash.info { background: rgba(96,165,250, .08); border-color: rgba(96,165,250, .3); color: #bed8ff; }
+
+.card { @include card; }
+.site-footer { background: rgba(11,16,32,.65); border-top: 1px solid $border; margin-top: 2rem; }
+.site-footer small { color: $muted; }
+
+.auth-wrapper { max-width: 520px; margin: 1rem auto 0; }
+.actions { display: flex; align-items: center; gap: .8rem; }
+.actions a { color: $muted; }

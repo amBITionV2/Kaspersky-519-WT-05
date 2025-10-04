@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{{ title or 'Flask App' }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SxZl1c2L3e3Qp2bQ6l3n3FQb3JQjGQm0r6qg4jKp3Yl1k1eZsVZJf1l9m1z2e6lLQy2p5cJwEJYM1o9rj3pQjw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
   </head>
   <body>
@@ -13,15 +14,19 @@
           <span class="dot"></span>
           <h1 style="margin:0; font-size:1.25rem;"><a href="/">Flask Starter</a></h1>
         </div>
-        <nav style="margin-top: .5rem;">
+        <button class="hamburger" aria-label="Toggle menu"><i class="fa-solid fa-bars"></i></button>
+        <nav class="nav-links" id="nav">
+          <a href="{{ url_for('index') }}"><i class="fa-solid fa-house"></i> Home</a>
+          <a href="{{ url_for('about') }}"><i class="fa-regular fa-circle-question"></i> About</a>
           {% if current_user.is_authenticated %}
-            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('dashboard') }}"><i class="fa-regular fa-user"></i> Dashboard</a>
             {% if getattr(current_user, 'user_type', 'user') == 'admin' %}
-              | <a href="{{ url_for('admin') }}">Admin</a>
+              <a href="{{ url_for('admin') }}"><i class="fa-solid fa-shield"></i> Admin</a>
             {% endif %}
-            | <a href="{{ url_for('logout') }}">Logout</a>
+            <a href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-brain"></i> Logout</a>
           {% else %}
-            <a href="{{ url_for('login') }}">Login</a> | <a href="{{ url_for('signup') }}">Sign Up</a>
+            <a href="{{ url_for('login') }}"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+            <a href="{{ url_for('signup') }}"><i class="fa-regular fa-id-card"></i> Sign Up</a>
           {% endif %}
         </nav>
       </div>
@@ -42,7 +47,16 @@
 
     <footer class="site-footer">
       <div class="container">
-        <small>&copy; {{ 2025 }} Flask Starter</small>
+        <div class="grid grid-2">
+          <div>
+            <strong>Flask Starter</strong>
+            <p class="muted">A community help platform demo.</p>
+          </div>
+          <div>
+            <p><a href="{{ url_for('about') }}">About</a> · <a href="https://flask.palletsprojects.com/" target="_blank" rel="noopener">Flask</a></p>
+            <small>&copy; {{ 2025 }} Flask Starter</small>
+          </div>
+        </div>
       </div>
     </footer>
 
