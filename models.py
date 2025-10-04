@@ -16,6 +16,8 @@ class User(UserMixin, db.Model):
     full_name = db.Column(db.String(120), nullable=True)
     phone = db.Column(db.String(50), nullable=True)
     location = db.Column(db.String(120), nullable=True)
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
     user_type = db.Column(db.String(20), nullable=False, default="user")  # admin/user
     is_blacklisted = db.Column(db.Boolean, nullable=False, default=False)
     blacklist_reason = db.Column(db.String(300), nullable=True)

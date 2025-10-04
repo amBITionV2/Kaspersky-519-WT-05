@@ -16,6 +16,9 @@ class Config:
     # Flask-WTF
     WTF_CSRF_ENABLED = True
 
+    # Logging
+    LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
+
     # Web3 / Blockchain
     ETH_RPC_URL = os.environ.get("ETH_RPC_URL", "")  # e.g. https://sepolia.infura.io/v3/<KEY>
     ETH_CHAIN_NAME = os.environ.get("ETH_CHAIN_NAME", "")

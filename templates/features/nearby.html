@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block content %}
+  <section class="card">
+    <div class="hero">
+      <h2>See Nearby People</h2>
+      <p class="muted">Find helpers and requesters near you. Set your latitude/longitude in your profile to enable this feature.</p>
+    </div>
+    <form method="get" class="nearby-filters">
+      <div class="grid grid-3">
+        <div class="field">
+          <label>Distance radius (km)</label>
+          <select class="input" name="radius">
+            {% for r in [1,2,5,10,20,50] %}
+              <option value="{{ r }}" {% if filters.radius|int == r %}selected{% endif %}>{{ r }} km</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label>Skills</label>
+          <input class="input" type="text" name="skills" value="{{ filters.skills }}" placeholder="e.g., tutoring, first-aid" />
+        </div>
+        <div class="field">
+          <label>Reputation minimum</label>
+          <input class="input" type="number" min="0" max="100" step="5" name="rep_min" value="{{ filters.rep_min }}" />
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn" type="submit"><i class="fa-solid fa-filter"></i> Apply</button>
+        <a class="btn secondary" href="{{ url_for('nearby') }}">Reset</a>
+      </div>
+    </form>
+  </section>
+
+  <div class="grid grid-2" style="margin-top:1rem;">
+    <section class="card">
+      <h3>People near you</h3>
+      {% if results %}
+        <div class="grid-cards">
+          {% for r in results %}
+            {% set u = r.user %}
+            <div class="mp-card">
+              <div class="mp-card__head">
+                <div class="avatar" {% if u.avatar_url %}style="background-image:url({{ u.avatar_url|tojson }});"{% endif %}></div>
+                <div>
+                  <strong>{{ u.full_name or u.username }}</strong>
+                  <div class="muted" style="font-size:.9rem;">{{ u.location or 'Unknown' }} · {{ r.distance }} km away</div>
+                </div>
+                <div style="margin-left:auto; text-align:right;">
+                  <div class="muted">Rep: {{ '%.1f'|format(u.reputation_score or 0) }}</div>
+                  {% if u.skills %}<div class="muted" style="max-width:260px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Skills: {{ u.skills }}</div>{% endif %}
+                </div>
+              </div>
+              <div class="actions">
+                <a class="btn" href="{{ url_for('profile_view', username=u.username) }}">View Profile</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted">No nearby users found with the selected filters.</p>
+      {% endif %}
+    </section>
+
+    <aside class="card">
+      <h3>Map (Coming Soon)</h3>
+      <div class="map-placeholder">Google Maps integration planned</div>
+      <p class="muted" style="margin-top:.5rem;">We’ll show user pins and allow drag-to-adjust radius.</p>
+    </aside>
+  </div>
+{% endblock %}

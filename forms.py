@@ -99,6 +99,8 @@ class ProfileForm(FlaskForm):
     bio = TextAreaField("About", validators=[Optional(), Length(max=2000)])
     skills = StringField("Skills", validators=[Optional(), Length(max=300)])
     avatar_url = StringField("Profile Picture URL", validators=[Optional(), Length(max=300)])
+    latitude = DecimalField("Latitude", places=6, rounding=None, validators=[Optional(), NumberRange(min=-90, max=90)])
+    longitude = DecimalField("Longitude", places=6, rounding=None, validators=[Optional(), NumberRange(min=-180, max=180)])
     submit = SubmitField("Save Changes")
 
 

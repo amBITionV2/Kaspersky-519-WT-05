@@ -8,6 +8,7 @@ from flask_login import (
 )
 from extensions import db, login_manager, csrf
 from web3_service import init_web3, get_web3
+import logging
 from flask_scss import Scss
 from blockchain_service import append_statement, maybe_seal_block
 
@@ -15,7 +16,17 @@ from blockchain_service import append_statement, maybe_seal_block
 def create_app() -> Flask:
     """Application factory."""
     app = Flask(__name__, static_folder="static", template_folder="templates")
+    # Optional: load .env if present
+    try:
+        from dotenv import load_dotenv  # type: ignore
+        load_dotenv()
+    except Exception:
+        pass
     app.config.from_object("config.Config")
+    # Logging setup
+    level = getattr(logging, str(app.config.get("LOG_LEVEL", "INFO")).upper(), logging.INFO)
+    logging.basicConfig(level=level, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    logging.getLogger("werkzeug").setLevel(level)
     # SCSS configuration
     app.config.setdefault("SCSS_ASSET_DIR", "assets/scss")
     app.config.setdefault("STATIC_ASSET_DIR", "static/css")
@@ -521,7 +532,78 @@ def create_app() -> Flask:
     @app.route("/nearby")
     @login_required
     def nearby():
-        return render_template("features/nearby.html")
+        from models import User
+        import math
+
+        # Require current user location
+        if current_user.latitude is None or current_user.longitude is None:
+            flash("Set your location (latitude/longitude) in your profile to see nearby people.", "info")
+            return redirect(url_for("profile_edit"))
+
+        # Filters
+        try:
+            radius_km = float(request.args.get("radius", 5))
+        except Exception:
+            radius_km = 5.0
+        skill_q = (request.args.get("skills", "").strip() or None)
+        try:
+            rep_min = float(request.args.get("rep_min", 0))
+        except Exception:
+            rep_min = 0.0
+
+        candidates = (
+            User.query.filter(
+                User.id != current_user.id,
+                User.latitude.isnot(None),
+                User.longitude.isnot(None),
+                User.is_blacklisted.is_(False),
+                (User.reputation_score >= rep_min),
+            ).all()
+        )
+
+        def haversine(lat1, lon1, lat2, lon2):
+            R = 6371.0
+            phi1 = math.radians(lat1)
+            phi2 = math.radians(lat2)
+            dphi = math.radians(lat2 - lat1)
+            dlambda = math.radians(lon2 - lon1)
+            a = math.sin(dphi/2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda/2) ** 2
+            c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+            return R * c
+
+        results = []
+        for u in candidates:
+            dist = haversine(current_user.latitude, current_user.longitude, float(u.latitude), float(u.longitude))
+            if dist <= radius_km:
+                if skill_q:
+                    if not (u.skills and skill_q.lower() in u.skills.lower()):
+                        continue
+                results.append({
+                    "user": u,
+                    "distance": round(dist, 2),
+                })
+        results.sort(key=lambda x: (x["distance"], -(x["user"].reputation_score or 0)))
+
+        filters = {
+            "radius": radius_km,
+            "skills": skill_q or "",
+            "rep_min": rep_min,
+        }
+
+        return render_template("features/nearby.html", results=results, filters=filters)
+
+    # Static pages
+    @app.route("/help")
+    def help_page():
+        return render_template("help.html")
+
+    @app.route("/terms")
+    def terms_page():
+        return render_template("terms.html")
+
+    @app.route("/privacy")
+    def privacy_page():
+        return render_template("privacy.html")
 
     @app.route("/marketplace")
     def marketplace():
@@ -944,6 +1026,15 @@ def create_app() -> Flask:
             user.bio = form.bio.data or None
             user.skills = form.skills.data or None
             user.avatar_url = form.avatar_url.data or None
+            # Save lat/lng if provided
+            try:
+                user.latitude = float(form.latitude.data) if form.latitude.data is not None else None
+            except Exception:
+                user.latitude = None
+            try:
+                user.longitude = float(form.longitude.data) if form.longitude.data is not None else None
+            except Exception:
+                user.longitude = None
             db.session.commit()
             flash("Profile updated.", "success")
             return redirect(url_for("profile_view", username=user.username))

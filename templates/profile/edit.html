@@ -27,6 +27,17 @@
           {{ form.avatar_url(class='input') }}
         </div>
       </div>
+      <div class="grid grid-2">
+        <div class="field">
+          <label>Latitude</label>
+          {{ form.latitude(class='input', placeholder='e.g., 12.9716') }}
+        </div>
+        <div class="field">
+          <label>Longitude</label>
+          {{ form.longitude(class='input', placeholder='e.g., 77.5946') }}
+        </div>
+      </div>
+      <p class="muted" style="margin-top:.25rem;">Latitude/Longitude are used to power the Nearby People feature.</p>
       <div class="field">
         <label>About</label>
         {{ form.bio(class='input', rows='4') }}
