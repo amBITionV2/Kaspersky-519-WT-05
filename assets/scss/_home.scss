@@ -1,0 +1,38 @@
+.hero {
+  padding: 2.25rem 0 1rem;
+  h2 { margin: .2rem 0 .75rem; }
+  p { margin: 0; }
+}
+
+.cards {
+  margin-top: 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.25rem;
+
+  @media (max-width: $bp-lg) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: $bp-sm) { grid-template-columns: 1fr; }
+}
+
+.card-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.card.feature {
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  display: block;
+  height: 100%;
+  border-color: rgba(96,165,250,.25);
+  &:hover { transform: translateY(-3px); box-shadow: 0 20px 30px rgba(0,0,0,.35); border-color: rgba(34,211,238,.35); }
+  i { font-size: 1.4rem; margin-right: .6rem; color: $accent; }
+  h3 { margin: 0 0 .35rem; display:flex; align-items:center; gap:.5rem; }
+  p { margin: 0; color: $muted; }
+}
+
+.nearby {
+  margin-top: 2rem;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  flex-wrap: wrap;
+  .actions { gap: .6rem; }
+}

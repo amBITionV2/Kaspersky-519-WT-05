@@ -1,5 +1,44 @@
 {% extends 'base.html' %}
 {% block content %}
-  <h2>Welcome</h2>
-  <p>Your Flask app is up and running.</p>
+  <section class="hero">
+    <h2>Community-Powered Task Assistance Platform</h2>
+    <p class="muted">Connect with people around you to get help with tasks, offer your skills, volunteer for good, or discover NGOs driving social impact.</p>
+  </section>
+
+  <section class="cards">
+    <a class="card-link" href="{{ url_for('request_help') }}">
+      <div class="card feature">
+        <h3><i class="fa-solid fa-hand-holding-hand"></i> Request Help</h3>
+        <p>Post a task and get assistance from community members near you.</p>
+      </div>
+    </a>
+    <a class="card-link" href="{{ url_for('offer_help') }}">
+      <div class="card feature">
+        <h3><i class="fa-solid fa-person-rays"></i> Offer Help</h3>
+        <p>Contribute your skills and time to help others accomplish their goals.</p>
+      </div>
+    </a>
+    <a class="card-link" href="{{ url_for('volunteer') }}">
+      <div class="card feature">
+        <h3><i class="fa-solid fa-handshake-angle"></i> Volunteer Opportunities</h3>
+        <p>Find meaningful, no-cost opportunities to serve your community.</p>
+      </div>
+    </a>
+    <a class="card-link" href="{{ url_for('ngos') }}">
+      <div class="card feature">
+        <h3><i class="fa-solid fa-ribbon"></i> NGO & Social Causes</h3>
+        <p>Explore NGOs and charity projects you can support or collaborate with.</p>
+      </div>
+    </a>
+  </section>
+
+  <section class="nearby">
+    <div>
+      <h3>See Nearby People</h3>
+      <p class="muted">Discover helpers and requesters around your location.</p>
+    </div>
+    <div class="actions">
+      <a class="btn" href="{{ url_for('nearby') }}"><i class="fa-solid fa-location-crosshairs"></i> Explore Nearby</a>
+    </div>
+  </section>
 {% endblock %}

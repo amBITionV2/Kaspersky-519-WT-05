@@ -128,7 +128,44 @@ def create_app() -> Flask:
     @app.route("/dashboard")
     @login_required
     def dashboard():
-        return render_template("dashboard.html")
+        from models import HelpRequest, HelpOffer
+
+        # Stats for the current user
+        total_requests = HelpRequest.query.filter_by(user_id=current_user.id).count()
+        total_offers = HelpOffer.query.filter_by(helper_id=current_user.id).count()
+        reputation = getattr(current_user, "reputation_score", 0.0)
+        pending_tasks = HelpRequest.query.filter(
+            HelpRequest.user_id == current_user.id,
+            HelpRequest.status.in_(["open", "in_progress"]),
+        ).count()
+
+        # Recent activity: last 5 combined items from requests/offers
+        recent_requests = (
+            HelpRequest.query.filter_by(user_id=current_user.id)
+            .order_by(HelpRequest.created_at.desc())
+            .limit(5)
+            .all()
+        )
+        recent_offers = (
+            HelpOffer.query.filter_by(helper_id=current_user.id)
+            .order_by(HelpOffer.created_at.desc())
+            .limit(5)
+            .all()
+        )
+
+        return render_template(
+            "dashboard.html",
+            stats={
+                "total_requests": total_requests,
+                "total_offers": total_offers,
+                "reputation": reputation,
+                "pending_tasks": pending_tasks,
+            },
+            recent={
+                "requests": recent_requests,
+                "offers": recent_offers,
+            },
+        )
 
     @app.route("/admin")
     @login_required
@@ -144,6 +181,32 @@ def create_app() -> Flask:
         if getattr(current_user, "user_type", "user") == "admin":
             return redirect(url_for("admin"))
         return redirect(url_for("dashboard"))
+
+    # Feature pages (placeholders)
+    @app.route("/request-help")
+    @login_required
+    def request_help():
+        return render_template("features/request_help.html")
+
+    @app.route("/offer-help")
+    @login_required
+    def offer_help():
+        return render_template("features/offer_help.html")
+
+    @app.route("/volunteer")
+    @login_required
+    def volunteer():
+        return render_template("features/volunteer.html")
+
+    @app.route("/ngos")
+    @login_required
+    def ngos():
+        return render_template("features/ngos.html")
+
+    @app.route("/nearby")
+    @login_required
+    def nearby():
+        return render_template("features/nearby.html")
 
     # Error handlers
     @app.errorhandler(404)

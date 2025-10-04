@@ -1,0 +1,37 @@
+.dashboard {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 1.25rem;
+
+  @media (max-width: $bp-md) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sidebar {
+  @include card;
+  position: sticky; top: 84px;
+  .nav { display:flex; flex-direction: column; gap: .5rem; }
+  .nav a { color: $muted; text-decoration: none; padding: .5rem .6rem; border-radius: 8px; }
+  .nav a:hover { background: #101826; color: $fg; }
+}
+
+.main {
+  display: grid; gap: 1.25rem;
+}
+
+.stats {
+  display: grid; gap: 1rem;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  @media (max-width: $bp-lg) { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  @media (max-width: $bp-sm) { grid-template-columns: 1fr; }
+}
+
+.stat-card { @include card; }
+.stat-card h4 { margin: 0 0 .35rem; }
+.stat-card .value { font-size: 1.6rem; font-weight: 800; color: $accent; }
+
+.section { @include card; }
+.section h3 { margin-top: 0; }
+
+.actions-row { display:flex; gap:.6rem; flex-wrap: wrap; }

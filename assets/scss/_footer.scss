@@ -1,0 +1,11 @@
+@import 'variables';
+
+.site-footer {
+  background: rgba(11,16,32,.65);
+  border-top: 1px solid $border;
+  margin-top: 2rem;
+  .container { padding-top: 1.25rem; padding-bottom: 1.25rem; }
+  small { color: $muted; }
+  a { color: $muted; text-decoration: none; }
+  a:hover { color: $fg; }
+}

@@ -1,5 +1,63 @@
 {% extends 'base.html' %}
 {% block content %}
-  <h2>User Dashboard</h2>
-  <p>Welcome, {{ current_user.username or 'user' }}.</p>
+  <div class="dashboard">
+    <aside class="sidebar">
+      <h3 style="margin-top:0;">Welcome, {{ current_user.full_name or current_user.username }}</h3>
+      <nav class="nav">
+        <a href="#profile"><i class="fa-regular fa-user"></i> My Profile</a>
+        <a href="#requests"><i class="fa-solid fa-list-check"></i> My Requests</a>
+        <a href="#offers"><i class="fa-solid fa-hands-helping"></i> My Offers</a>
+        <a href="#reviews"><i class="fa-regular fa-star"></i> My Reviews</a>
+        <a href="#reputation"><i class="fa-solid fa-chart-line"></i> Reputation Score</a>
+      </nav>
+    </aside>
+
+    <section class="main">
+      <div class="stats">
+        <div class="stat-card">
+          <h4>Total requests created</h4>
+          <div class="value">{{ stats.total_requests }}</div>
+        </div>
+        <div class="stat-card">
+          <h4>Total help offers made</h4>
+          <div class="value">{{ stats.total_offers }}</div>
+        </div>
+        <div class="stat-card">
+          <h4>Current reputation score</h4>
+          <div class="value">{{ '%.1f'|format(stats.reputation) }}</div>
+        </div>
+        <div class="stat-card">
+          <h4>Pending tasks</h4>
+          <div class="value">{{ stats.pending_tasks }}</div>
+        </div>
+      </div>
+
+      <div class="section" id="recent">
+        <h3>Recent Activity</h3>
+        {% if recent.requests or recent.offers %}
+          <ul>
+            {% for r in recent.requests %}
+              <li>
+                <strong>Request:</strong> {{ r.title }}
+                <span class="muted"> · {{ r.status }} · {{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+              </li>
+            {% endfor %}
+            {% for o in recent.offers %}
+              <li>
+                <strong>Offer:</strong> on request #{{ o.request_id }}
+                <span class="muted"> · {{ o.status }} · {{ o.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="muted">No recent activity yet.</p>
+        {% endif %}
+      </div>
+
+      <div class="section actions-row">
+        <a class="btn" href="{{ url_for('request_help') }}"><i class="fa-solid fa-circle-plus"></i> Create New Request</a>
+        <a class="btn secondary" href="{{ url_for('offer_help') }}"><i class="fa-solid fa-compass"></i> Browse Help Requests</a>
+      </div>
+    </section>
+  </div>
 {% endblock %}
