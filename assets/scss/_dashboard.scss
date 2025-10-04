@@ -78,7 +78,7 @@
 .stats-horizontal {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
 
   @media (max-width: $bp-sm) {
     grid-template-columns: 1fr;

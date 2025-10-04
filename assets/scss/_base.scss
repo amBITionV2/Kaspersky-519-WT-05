@@ -30,6 +30,7 @@ h1, h2, h3 { color: var(--text-color); letter-spacing: .2px; }
   cursor: pointer;
   box-shadow: 0 10px 20px rgba(59, 130, 246, .25);
   transition: all 0.3s ease;
+  text-decoration: none;
   &:hover { filter: brightness(1.05); transform: translateY(-2px); }
   &.secondary {
     background: var(--panel-color);
