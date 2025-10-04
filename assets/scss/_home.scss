@@ -6,17 +6,41 @@
 
 .cards {
   margin-top: 1.25rem;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1.25rem;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 1rem;
+}
 
-  @media (max-width: $bp-lg) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  @media (max-width: $bp-sm) { grid-template-columns: 1fr; }
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(220px, 1fr));
+  gap: 1.5rem;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(3, minmax(200px, 1fr));
+  }
+
+  @media (max-width: $bp-lg) {
+    grid-template-columns: repeat(2, minmax(250px, 1fr));
+  }
+
+  @media (max-width: $bp-md) {
+    grid-template-columns: repeat(2, minmax(200px, 1fr));
+    gap: 1.25rem;
+  }
+
+  @media (max-width: $bp-sm) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 }
 
 .card-link {
   text-decoration: none;
   color: inherit;
+  display: block;
+  height: 100%;
 }
 
 .card.feature {
@@ -24,10 +48,34 @@
   display: block;
   height: 100%;
   border-color: rgba(96,165,250,.25);
-  &:hover { transform: translateY(-3px); box-shadow: 0 20px 30px rgba(0,0,0,.35); border-color: rgba(34,211,238,.35); }
-  i { font-size: 1.4rem; margin-right: .6rem; color: $accent; }
-  h3 { margin: 0 0 .35rem; display:flex; align-items:center; gap:.5rem; }
-  p { margin: 0; color: $muted; }
+  background: var(--panel-color);
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 30px rgba(0,0,0,.35);
+    border-color: rgba(34,211,238,.35);
+  }
+
+  i {
+    font-size: 1.4rem;
+    margin-right: .6rem;
+    color: var(--accent-color);
+  }
+
+  h3 {
+    margin: 0 0 .75rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    color: var(--text-color);
+    font-size: 1.1rem;
+  }
+
+  p {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
 }
 
 .nearby {

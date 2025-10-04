@@ -1,4 +1,4 @@
-// Theme Toggle Functionality
+// Enhanced Theme Toggle Functionality
 document.addEventListener('DOMContentLoaded', function() {
     const themeToggle = document.getElementById('themeToggle');
     const html = document.documentElement;
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
         html.removeAttribute('data-theme');
     }
 
-    // Theme toggle functionality
+    // Enhanced theme toggle functionality
     if (themeToggle) {
         themeToggle.addEventListener('click', function() {
             const currentTheme = html.getAttribute('data-theme');
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem('theme', 'light');
             }
 
-            // Add a subtle animation effect
+            // Add enhanced animation effect
             themeToggle.style.transform = 'scale(0.95)';
             setTimeout(() => {
                 themeToggle.style.transform = 'scale(1)';

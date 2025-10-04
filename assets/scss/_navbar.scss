@@ -58,5 +58,12 @@
   }
   .nav-links.open { display:flex; }
   .hamburger { display:block; }
-  .header-actions { flex-direction: column; align-items: flex-end; }
+  .header-actions {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+  }
+  .theme-switch-container {
+    order: -1;
+  }
 }

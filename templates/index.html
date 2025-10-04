@@ -6,30 +6,32 @@
   </section>
 
   <section class="cards">
-    <a class="card-link" href="{{ url_for('request_help') }}">
-      <div class="card feature">
-        <h3><i class="fa-solid fa-hand-holding-hand"></i> Request Help</h3>
-        <p>Post a task and get assistance from community members near you.</p>
-      </div>
-    </a>
-    <a class="card-link" href="{{ url_for('offer_help') }}">
-      <div class="card feature">
-        <h3><i class="fa-solid fa-person-rays"></i> Offer Help</h3>
-        <p>Contribute your skills and time to help others accomplish their goals.</p>
-      </div>
-    </a>
-    <a class="card-link" href="{{ url_for('volunteer') }}">
-      <div class="card feature">
-        <h3><i class="fa-solid fa-handshake-angle"></i> Volunteer Opportunities</h3>
-        <p>Find meaningful, no-cost opportunities to serve your community.</p>
-      </div>
-    </a>
-    <a class="card-link" href="{{ url_for('ngos') }}">
-      <div class="card feature">
-        <h3><i class="fa-solid fa-ribbon"></i> NGO & Social Causes</h3>
-        <p>Explore NGOs and charity projects you can support or collaborate with.</p>
-      </div>
-    </a>
+    <div class="cards-container">
+      <a class="card-link" href="{{ url_for('request_help') }}">
+        <div class="card feature">
+          <h3><i class="fa-solid fa-hand-holding-hand"></i> Request Help</h3>
+          <p>Post a task and get assistance from community members near you.</p>
+        </div>
+      </a>
+      <a class="card-link" href="{{ url_for('offer_help') }}">
+        <div class="card feature">
+          <h3><i class="fa-solid fa-person-rays"></i> Offer Help</h3>
+          <p>Contribute your skills and time to help others accomplish their goals.</p>
+        </div>
+      </a>
+      <a class="card-link" href="{{ url_for('volunteer') }}">
+        <div class="card feature">
+          <h3><i class="fa-solid fa-handshake-angle"></i> Volunteer Opportunities</h3>
+          <p>Find meaningful, no-cost opportunities to serve your community.</p>
+        </div>
+      </a>
+      <a class="card-link" href="{{ url_for('ngos') }}">
+        <div class="card feature">
+          <h3><i class="fa-solid fa-ribbon"></i> NGO & Social Causes</h3>
+          <p>Explore NGOs and charity projects you can support or collaborate with.</p>
+        </div>
+      </a>
+    </div>
   </section>
 
   <section class="nearby">
