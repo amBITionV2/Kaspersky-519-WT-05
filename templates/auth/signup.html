@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="auth-wrapper">
+    <div class="card">
+      <div class="hero">
+        <h2>Create an account</h2>
+        <p class="muted">Join and start posting help requests or offers.</p>
+      </div>
+      <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="field">
+          <label>Username</label>
+          {{ form.username(class='input') }}
+          {% for e in form.username.errors %}<div class="flash error">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="field">
+          <label>Email</label>
+          {{ form.email(class='input') }}
+          {% for e in form.email.errors %}<div class="flash error">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Password</label>
+            {{ form.password(class='input') }}
+            {% for e in form.password.errors %}<div class="flash error">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="field">
+            <label>Confirm Password</label>
+            {{ form.confirm_password(class='input') }}
+            {% for e in form.confirm_password.errors %}<div class="flash error">{{ e }}</div>{% endfor %}
+          </div>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Full Name</label>
+            {{ form.full_name(class='input') }}
+          </div>
+          <div class="field">
+            <label>Phone</label>
+            {{ form.phone(class='input') }}
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Location</label>
+          {{ form.location(class='input') }}
+        </div>
+
+        <div class="actions">
+          {{ form.submit(class='btn', value='Create account') }}
+          <a href="{{ url_for('login') }}">Already have an account? Log in</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

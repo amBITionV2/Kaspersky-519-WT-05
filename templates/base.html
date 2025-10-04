@@ -9,11 +9,34 @@
   <body>
     <header class="site-header">
       <div class="container">
-        <h1><a href="/">Flask Starter</a></h1>
+        <div class="brand">
+          <span class="dot"></span>
+          <h1 style="margin:0; font-size:1.25rem;"><a href="/">Flask Starter</a></h1>
+        </div>
+        <nav style="margin-top: .5rem;">
+          {% if current_user.is_authenticated %}
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            {% if getattr(current_user, 'user_type', 'user') == 'admin' %}
+              | <a href="{{ url_for('admin') }}">Admin</a>
+            {% endif %}
+            | <a href="{{ url_for('logout') }}">Logout</a>
+          {% else %}
+            <a href="{{ url_for('login') }}">Login</a> | <a href="{{ url_for('signup') }}">Sign Up</a>
+          {% endif %}
+        </nav>
       </div>
     </header>
 
     <main class="container">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flashes">
+            {% for category, message in messages %}
+              <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
       {% block content %}{% endblock %}
     </main>
 

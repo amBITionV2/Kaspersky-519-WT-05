@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="auth-wrapper">
+    <div class="card">
+      <div class="hero">
+        <h2>Welcome back</h2>
+        <p class="muted">Log in to continue.</p>
+      </div>
+      <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="field">
+          <label>Email</label>
+          {{ form.email(class='input') }}
+          {% for e in form.email.errors %}<div class="flash error">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="field">
+          <label>Password</label>
+          {{ form.password(class='input') }}
+          {% for e in form.password.errors %}<div class="flash error">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="field">
+          <label style="display:flex; align-items:center; gap:.5rem;">
+            {{ form.remember_me() }} Remember me
+          </label>
+        </div>
+
+        <div class="actions">
+          {{ form.submit(class='btn', value='Log in') }}
+          <a href="{{ url_for('signup') }}">Need an account? Sign up</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
