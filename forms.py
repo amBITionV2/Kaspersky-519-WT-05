@@ -104,6 +104,14 @@ class ProfileForm(FlaskForm):
     submit = SubmitField("Save Changes")
 
 
+class AcceptOfferForm(FlaskForm):
+    submit = SubmitField("Accept Offer")
+
+
+class CompleteTaskForm(FlaskForm):
+    submit = SubmitField("Mark as Completed")
+
+
 class ReviewForm(FlaskForm):
     rating = SelectField(
         "Rating",

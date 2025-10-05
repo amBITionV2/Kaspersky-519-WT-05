@@ -20,6 +20,55 @@
 
       <p>{{ req.description|replace('\n', '<br>')|safe }}</p>
 
+      {% if is_requester %}
+        <div class="section" style="margin-top:1rem;">
+          <h3>Offers Received ({{ all_offers|length }})</h3>
+          {% if all_offers %}
+            <div class="offers-list">
+              {% for offer in all_offers %}
+                <div class="offer-card {{ offer.status }}">
+                  <div class="offer-head">
+                    <div class="avatar"></div>
+                    <div>
+                      <strong>{{ offer.helper.full_name or offer.helper.username }}</strong>
+                      <div class="muted" style="font-size:.85rem;">{{ offer.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                      <div class="reputation-badge">Reputation: {{ '%.1f'|format(offer.helper.reputation_score or 0) }}</div>
+                    </div>
+                    <span class="badge {{ offer.status }}">{{ offer.status|capitalize }}</span>
+                  </div>
+                  <p class="offer-message">{{ offer.message|replace('\n', '<br>')|safe }}</p>
+
+                  {% if offer.status == 'pending' %}
+                    <form method="post" style="margin-top: 0.5rem;">
+                      {{ accept_form.hidden_tag() }}
+                      <input type="hidden" name="offer_id" value="{{ offer.id }}">
+                      <button type="submit" class="btn btn-small" onclick="return confirm('Accept this offer? All other pending offers will be rejected.')">
+                        <i class="fa-solid fa-check"></i> Accept Offer
+                      </button>
+                    </form>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="muted">No offers received yet. Helpers will be able to submit offers soon!</p>
+          {% endif %}
+        </div>
+
+        {% if req.status == 'in_progress' %}
+          <div class="section" style="margin-top:1rem;">
+            <h3>Task Management</h3>
+            <p>Your task is currently in progress. Once completed, click the button below to mark it as finished.</p>
+            <form method="post" style="margin-top: 1rem;">
+              {{ complete_form.hidden_tag() }}
+              <button type="submit" class="btn btn-success" onclick="return confirm('Mark this task as completed?')">
+                <i class="fa-solid fa-check-circle"></i> Mark Task as Completed
+              </button>
+            </form>
+          </div>
+        {% endif %}
+      {% endif %}
+
       <div class="section" style="margin-top:1rem;">
         <h3>Reviews</h3>
         {% if request_reviews %}
@@ -61,25 +110,27 @@
         <div class="flash info" style="margin-top: .75rem;">You already submitted an offer. Current status: <strong>{{ my_offer.status|capitalize }}</strong></div>
       {% endif %}
 
-      <h3 style="margin-top:1rem;">Offer your help</h3>
-      <form method="post" novalidate>
-        {{ form.hidden_tag() }}
-        <div class="field">
-          <label>Message to requester</label>
-          {{ form.message(class='input', rows='4', placeholder='Explain why you can help...') }}
-          {% for e in form.message.errors %}<div class="flash error">{{ e }}</div>{% endfor %}
-        </div>
-        <div class="field" style="display:flex; align-items:center; gap:.6rem;">
-          {{ form.availability() }} <label style="margin:0">I am available and can start</label>
-        </div>
-        <div class="field">
-          <label>Expected completion timeframe</label>
-          {{ form.timeframe(class='input', placeholder='e.g., within 2 days') }}
-        </div>
-        <div class="actions">
-          {{ form.submit(class='btn', value='Submit Offer') }}
-        </div>
-      </form>
+      {% if not is_requester %}
+        <h3 style="margin-top:1rem;">Offer your help</h3>
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+          <div class="field">
+            <label>Message to requester</label>
+            {{ form.message(class='input', rows='4', placeholder='Explain why you can help...') }}
+            {% for e in form.message.errors %}<div class="flash error">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="field" style="display:flex; align-items:center; gap:.6rem;">
+            {{ form.availability() }} <label style="margin:0">I am available and can start</label>
+          </div>
+          <div class="field">
+            <label>Expected completion timeframe</label>
+            {{ form.timeframe(class='input', placeholder='e.g., within 2 days') }}
+          </div>
+          <div class="actions">
+            {{ form.submit(class='btn', value='Submit Offer') }}
+          </div>
+        </form>
+      {% endif %}
 
       {% if can_review %}
         <h3 style="margin-top:1rem;">Leave a review</h3>

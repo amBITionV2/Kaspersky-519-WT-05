@@ -784,13 +784,21 @@ def create_app() -> Flask:
     @login_required
     def request_detail(request_id: int):
         from models import HelpRequest, User, HelpOffer, Review
-        from forms import OfferHelpForm, ReviewForm
+        from forms import OfferHelpForm, ReviewForm, AcceptOfferForm, CompleteTaskForm
 
         req = HelpRequest.query.get_or_404(request_id)
         requester = User.query.get(req.user_id)
 
         offer_form = OfferHelpForm()
         review_form = ReviewForm()
+        accept_form = AcceptOfferForm()
+        complete_form = CompleteTaskForm()
+
+        # Get all offers for this request
+        all_offers = HelpOffer.query.filter_by(request_id=request_id).order_by(HelpOffer.created_at.desc()).all()
+
+        # Check if current user is the requester
+        is_requester = current_user.id == req.user_id
 
         # Handle offer submit
         if getattr(current_user, "is_blacklisted", False) and offer_form.submit.data:
@@ -828,6 +836,65 @@ def create_app() -> Flask:
 
             flash("Offer submitted to the requester.", "success")
             return redirect(url_for("request_detail", request_id=req.id))
+
+        # Handle offer acceptance (only by requester)
+        if is_requester and accept_form.submit.data:
+            offer_id = request.form.get('offer_id')
+            if offer_id:
+                offer = HelpOffer.query.get_or_404(offer_id)
+                if offer.request_id == req.id and offer.status == "pending":
+                    # Reject all other offers
+                    HelpOffer.query.filter_by(request_id=req.id, status="pending").update({"status": "rejected"})
+
+                    # Accept the selected offer
+                    offer.status = "accepted"
+                    req.status = "in_progress"
+                    db.session.commit()
+
+                    # Blockchain log: offer acceptance
+                    try:
+                        append_statement(
+                            kind="offer_accepted",
+                            payload={
+                                "request_id": req.id,
+                                "offer_id": offer.id,
+                                "helper_id": offer.helper_id,
+                                "requester_id": current_user.id,
+                            },
+                            user_id=current_user.id,
+                        )
+                        maybe_seal_block()
+                    except Exception:  # noqa: BLE001
+                        pass
+
+                    flash(f"Offer from {offer.helper.full_name or offer.helper.username} has been accepted!", "success")
+                    return redirect(url_for("request_detail", request_id=req.id))
+
+        # Handle task completion (only by requester)
+        if is_requester and complete_form.submit.data and req.status == "in_progress":
+            accepted_offer = HelpOffer.query.filter_by(request_id=req.id, status="accepted").first()
+            if accepted_offer:
+                req.status = "completed"
+                accepted_offer.status = "completed"
+                db.session.commit()
+
+                # Blockchain log: task completion
+                try:
+                    append_statement(
+                        kind="task_completed",
+                        payload={
+                            "request_id": req.id,
+                            "helper_id": accepted_offer.helper_id,
+                            "requester_id": current_user.id,
+                        },
+                        user_id=current_user.id,
+                    )
+                    maybe_seal_block()
+                except Exception:  # noqa: BLE001
+                    pass
+
+                flash("Task marked as completed! You can now leave a review.", "success")
+                return redirect(url_for("request_detail", request_id=req.id))
 
         # Handle review submit (only for completed tasks and participants)
         if review_form.submit.data and review_form.validate_on_submit():
@@ -867,6 +934,18 @@ def create_app() -> Flask:
             )
             db.session.add(rv)
 
+            # Simple reputation update for the reviewee
+            reviewee = User.query.get(reviewee_id)
+            delta = 0
+            if reviewee is not None:
+                delta = rating * 3
+                if rating == 5:
+                    delta += 2
+                if rating <= 2:
+                    delta -= 5
+                new_score = max(0.0, min(100.0, float(reviewee.reputation_score or 0.0) + delta))
+                reviewee.reputation_score = new_score
+
             # Blockchain log: review submission
             try:
                 append_statement(
@@ -884,26 +963,21 @@ def create_app() -> Flask:
             except Exception:  # noqa: BLE001
                 pass
 
-            # Simple reputation update for the reviewee
-            reviewee = User.query.get(reviewee_id)
-            if reviewee is not None:
-                delta = rating * 3
-                if rating == 5:
-                    delta += 2
-                if rating <= 2:
-                    delta -= 5
-                new_score = max(0.0, min(100.0, float(reviewee.reputation_score or 0.0) + delta))
-                reviewee.reputation_score = new_score
-
             db.session.commit()
             flash("Review submitted.", "success")
             return redirect(url_for("request_detail", request_id=req.id))
 
-        if request.method == "POST" and (offer_form.errors or review_form.errors):
+        if request.method == "POST" and (offer_form.errors or review_form.errors or accept_form.errors or complete_form.errors):
             for field, errs in offer_form.errors.items():
                 for e in errs:
                     flash(f"{field}: {e}", "error")
             for field, errs in review_form.errors.items():
+                for e in errs:
+                    flash(f"{field}: {e}", "error")
+            for field, errs in accept_form.errors.items():
+                for e in errs:
+                    flash(f"{field}: {e}", "error")
+            for field, errs in complete_form.errors.items():
                 for e in errs:
                     flash(f"{field}: {e}", "error")
 
@@ -939,6 +1013,10 @@ def create_app() -> Flask:
             requester=requester,
             form=offer_form,
             review_form=review_form,
+            accept_form=accept_form,
+            complete_form=complete_form,
+            all_offers=all_offers,
+            is_requester=is_requester,
             my_offer=my_offer,
             request_reviews=request_reviews,
             can_review=can_review,
