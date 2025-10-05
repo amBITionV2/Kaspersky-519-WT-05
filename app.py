@@ -157,9 +157,35 @@ def create_app() -> Flask:
                 balance_eth = w3.from_wei(wei, "ether")
             except Exception as e:  # noqa: BLE001
                 error = str(e)
-        return render_template("web3/balance.html", address=addr, balance=balance_eth, error=error)
+    @app.route("/blockchain/blocks")
+    @login_required
+    def blockchain_blocks():
+        from models import Block, Statement
 
-    # Auth routes
+        # Get pagination parameters
+        page = int(request.args.get("page", 1) or 1)
+        per_page = 10
+
+        # Query blocks with statements count
+        blocks_query = db.session.query(
+            Block,
+            db.func.count(Statement.id).label('statement_count')
+        ).outerjoin(Statement, Block.id == Statement.block_id)\
+         .group_by(Block.id)\
+         .order_by(Block.index.desc())
+
+        pagination = blocks_query.paginate(page=page, per_page=per_page, error_out=False)
+        blocks_with_counts = pagination.items
+
+        # Get total blocks count
+        total_blocks = db.session.query(Block).count()
+
+        return render_template(
+            "blockchain/blocks.html",
+            blocks_with_counts=blocks_with_counts,
+            pagination=pagination,
+            total_blocks=total_blocks,
+        )
     @app.route("/signup", methods=["GET", "POST"])
     def signup():
         from models import User
@@ -308,8 +334,10 @@ def create_app() -> Flask:
     @app.route("/post-login-redirect")
     @login_required
     def post_login_redirect():
-        if getattr(current_user, "user_type", "user") == "admin":
-            return redirect(url_for("admin"))
+        # Check for specific admin credentials
+        if (getattr(current_user, "username", "") == "admin" and
+            getattr(current_user, "email", "") == "admin@dailyhelper.com"):
+            return redirect(url_for("blockchain_blocks"))
         return redirect(url_for("dashboard"))
 
     # Feature pages (placeholders)
@@ -344,6 +372,24 @@ def create_app() -> Flask:
             )
             db.session.add(hr)
             db.session.commit()
+
+            # Blockchain log: request creation
+            try:
+                append_statement(
+                    kind="request_create",
+                    payload={
+                        "request_id": hr.id,
+                        "title": hr.title,
+                        "category": hr.category,
+                        "is_volunteer": hr.is_volunteer,
+                        "price": float(hr.price) if hr.price else None,
+                    },
+                    user_id=current_user.id,
+                )
+                maybe_seal_block()
+            except Exception:  # noqa: BLE001
+                pass
+
             flash("Request posted successfully.", "success")
             return redirect(url_for("request_help"))
 
@@ -545,6 +591,23 @@ def create_app() -> Flask:
             )
             db.session.add(ngo)
             db.session.commit()
+
+            # Blockchain log: NGO submission
+            try:
+                append_statement(
+                    kind="ngo_submit",
+                    payload={
+                        "ngo_id": ngo.id,
+                        "name": ngo.name,
+                        "category": ngo.category,
+                        "location": ngo.location,
+                    },
+                    user_id=current_user.id,
+                )
+                maybe_seal_block()
+            except Exception:  # noqa: BLE001
+                pass
+
             flash("NGO submitted for approval. Our team will verify and publish it.", "success")
             return redirect(url_for("ngos"))
 
@@ -754,6 +817,22 @@ def create_app() -> Flask:
             )
             db.session.add(offer)
             db.session.commit()
+
+            # Blockchain log: offer submission
+            try:
+                append_statement(
+                    kind="offer_submit",
+                    payload={
+                        "request_id": req.id,
+                        "offer_id": offer.id,
+                        "message_length": len(offer.message or ""),
+                    },
+                    user_id=current_user.id,
+                )
+                maybe_seal_block()
+            except Exception:  # noqa: BLE001
+                pass
+
             flash("Offer submitted to the requester.", "success")
             return redirect(url_for("request_detail", request_id=req.id))
 
@@ -794,6 +873,23 @@ def create_app() -> Flask:
                 comment=comment or None,
             )
             db.session.add(rv)
+
+            # Blockchain log: review submission
+            try:
+                append_statement(
+                    kind="review_submit",
+                    payload={
+                        "request_id": req.id,
+                        "review_id": rv.id,
+                        "rating": rating,
+                        "reviewee_id": reviewee_id,
+                        "reputation_change": delta,
+                    },
+                    user_id=current_user.id,
+                )
+                maybe_seal_block()
+            except Exception:  # noqa: BLE001
+                pass
 
             # Simple reputation update for the reviewee
             reviewee = User.query.get(reviewee_id)
@@ -929,6 +1025,22 @@ def create_app() -> Flask:
         u.is_blacklisted = True
         u.blacklist_reason = reason
         db.session.commit()
+
+        # Blockchain log: user blacklisted
+        try:
+            append_statement(
+                kind="admin_blacklist",
+                payload={
+                    "target_user_id": user_id,
+                    "reason": reason,
+                    "admin_id": current_user.id,
+                },
+                user_id=current_user.id,
+            )
+            maybe_seal_block()
+        except Exception:  # noqa: BLE001
+            pass
+
         flash("User blacklisted.", "success")
         return redirect(url_for("admin_users"))
 
@@ -941,6 +1053,21 @@ def create_app() -> Flask:
         u.is_blacklisted = False
         u.blacklist_reason = None
         db.session.commit()
+
+        # Blockchain log: user unblacklisted
+        try:
+            append_statement(
+                kind="admin_unblacklist",
+                payload={
+                    "target_user_id": user_id,
+                    "admin_id": current_user.id,
+                },
+                user_id=current_user.id,
+            )
+            maybe_seal_block()
+        except Exception:  # noqa: BLE001
+            pass
+
         flash("User unblacklisted.", "success")
         return redirect(url_for("admin_users"))
 
@@ -952,6 +1079,22 @@ def create_app() -> Flask:
         u = User.query.get_or_404(user_id)
         db.session.delete(u)
         db.session.commit()
+
+        # Blockchain log: user deleted
+        try:
+            append_statement(
+                kind="admin_delete_user",
+                payload={
+                    "target_user_id": user_id,
+                    "deleted_username": u.username,
+                    "admin_id": current_user.id,
+                },
+                user_id=current_user.id,
+            )
+            maybe_seal_block()
+        except Exception:  # noqa: BLE001
+            pass
+
         flash("User deleted.", "success")
         return redirect(url_for("admin_users"))
 
@@ -988,6 +1131,22 @@ def create_app() -> Flask:
         n = NGO.query.get_or_404(ngo_id)
         n.verified_status = True
         db.session.commit()
+
+        # Blockchain log: NGO verified
+        try:
+            append_statement(
+                kind="admin_verify_ngo",
+                payload={
+                    "ngo_id": ngo_id,
+                    "ngo_name": n.name,
+                    "admin_id": current_user.id,
+                },
+                user_id=current_user.id,
+            )
+            maybe_seal_block()
+        except Exception:  # noqa: BLE001
+            pass
+
         flash("NGO verified.", "success")
         return redirect(url_for("admin_moderation"))
 
@@ -1062,6 +1221,23 @@ def create_app() -> Flask:
             except Exception:
                 user.longitude = None
             db.session.commit()
+
+            # Blockchain log: profile update
+            try:
+                append_statement(
+                    kind="profile_update",
+                    payload={
+                        "updated_fields": [
+                            field for field in ["full_name", "phone", "location", "bio", "skills", "avatar_url", "latitude", "longitude"]
+                            if getattr(form, field).data is not None
+                        ],
+                    },
+                    user_id=current_user.id,
+                )
+                maybe_seal_block()
+            except Exception:  # noqa: BLE001
+                pass
+
             flash("Profile updated.", "success")
             return redirect(url_for("profile_view", username=user.username))
 

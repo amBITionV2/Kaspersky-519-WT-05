@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+{% set title = 'Blockchain Blocks | Community Help' %}
+{% block head_extra %}
+<style>
+.blockchain-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.blocks-grid {
+  display: grid;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.block-card {
+  background: var(--panel-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+.block-card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.block-index {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--accent-color);
+}
+
+.block-hash {
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  word-break: break-all;
+  margin-bottom: 1rem;
+}
+
+.block-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.meta-item {
+  background: rgba(59, 130, 246, 0.05);
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  border-left: 3px solid var(--accent-color);
+}
+
+.meta-label {
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+.meta-value {
+  color: var(--text-muted);
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+
+.statements-section {
+  margin-top: 2rem;
+}
+
+.statements-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.statements-count {
+  background: var(--accent-color);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.statements-list {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+}
+
+.statement-item {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.2s ease;
+}
+
+.statement-item:hover {
+  background: rgba(59, 130, 246, 0.02);
+}
+
+.statement-item:last-child {
+  border-bottom: none;
+}
+
+.statement-kind {
+  font-weight: 600;
+  color: var(--accent-color);
+  margin-bottom: 0.5rem;
+}
+
+.statement-user {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.statement-payload {
+  background: rgba(0, 0, 0, 0.02);
+  padding: 0.75rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+.statement-time {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 3rem;
+  padding: 2rem;
+}
+
+.pagination a, .pagination span {
+  padding: 0.75rem 1.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  text-decoration: none;
+  color: var(--text-color);
+  transition: all 0.3s ease;
+}
+
+.pagination a:hover {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+}
+
+.pagination .current {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+}
+
+.stats-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.stats-header h1 {
+  color: var(--text-color);
+  margin-bottom: 1rem;
+}
+
+.total-blocks {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+}
+
+.no-blocks {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-muted);
+}
+
+.no-blocks i {
+  font-size: 4rem;
+  color: var(--border-color);
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+  .blockchain-container {
+    padding: 1rem;
+  }
+
+  .block-card {
+    padding: 1.5rem;
+  }
+
+  .block-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .statements-list {
+    max-height: 300px;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="blockchain-container">
+  <div class="stats-header">
+    <h1>Blockchain Blocks</h1>
+    <p class="total-blocks">{{ total_blocks }} total blocks mined</p>
+  </div>
+
+  {% if blocks_with_counts %}
+    <div class="blocks-grid">
+      {% for block, statement_count in blocks_with_counts %}
+        <div class="block-card">
+          <div class="block-header">
+            <span class="block-index">Block #{{ block.index }}</span>
+            <span class="statements-count">{{ statement_count }} statements</span>
+          </div>
+
+          <div class="block-hash">
+            <strong>Hash:</strong> {{ block.hash }}
+          </div>
+
+          {% if block.prev_hash %}
+            <div class="block-hash" style="margin-bottom: 2rem;">
+              <strong>Previous Hash:</strong> {{ block.prev_hash }}
+            </div>
+          {% endif %}
+
+          <div class="block-meta">
+            <div class="meta-item">
+              <div class="meta-label">Created At</div>
+              <div class="meta-value">{{ block.created_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Block ID</div>
+              <div class="meta-value">{{ block.id }}</div>
+            </div>
+          </div>
+
+          <div class="statements-section">
+            <div class="statements-header">
+              <h3>Statements in Block</h3>
+            </div>
+
+            <div class="statements-list">
+              {% set statements = block.statements %}
+              {% for statement in statements %}
+                <div class="statement-item">
+                  <div class="statement-kind">{{ statement.kind | title }}</div>
+                  {% if statement.user %}
+                    <div class="statement-user">By: {{ statement.user.username }}</div>
+                  {% endif %}
+                  <div class="statement-payload">{{ statement.payload | tojson }}</div>
+                  <div class="statement-time">{{ statement.created_at.strftime('%H:%M:%S') }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      {% if pagination.has_prev %}
+        <a href="{{ url_for('blockchain_blocks', page=pagination.prev_num) }}">← Previous</a>
+      {% endif %}
+
+      <span class="current">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+
+      {% if pagination.has_next %}
+        <a href="{{ url_for('blockchain_blocks', page=pagination.next_num) }}">Next →</a>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="no-blocks">
+      <i class="fa-solid fa-cube"></i>
+      <h2>No Blocks Yet</h2>
+      <p>Blockchain blocks will appear here once user activities start generating statements.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
