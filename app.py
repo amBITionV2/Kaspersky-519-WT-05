@@ -147,16 +147,9 @@ def create_app() -> Flask:
         w3 = get_web3()
         addr = flask_request.args.get("address", "").strip()
         balance_eth = None
-        error = None
-        if w3 is None:
-            error = "Web3 is not configured. Set ETH_RPC_URL."
-        elif addr:
-            try:
-                checksum = w3.to_checksum_address(addr)
-                wei = w3.eth.get_balance(checksum)
-                balance_eth = w3.from_wei(wei, "ether")
-            except Exception as e:  # noqa: BLE001
-                error = str(e)
+    @app.route("/connect-wallet")
+    def connect_wallet():
+        return render_template("wallet/connect.html")
     @app.route("/blockchain/blocks")
     @login_required
     def blockchain_blocks():

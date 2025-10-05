@@ -1,0 +1,454 @@
+{% extends 'base.html' %}
+{% set title = 'Connect Wallet | DailyHelper' %}
+{% block head_extra %}
+<style>
+.wallet-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+}
+
+.wallet-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.wallet-header h1 {
+  color: var(--text-color);
+  margin-bottom: 1rem;
+  font-size: 2.5rem;
+}
+
+.wallet-header p {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  margin-bottom: 0;
+}
+
+.wallet-options {
+  display: grid;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.wallet-option {
+  background: var(--panel-color);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-align: center;
+}
+
+.wallet-option:hover {
+  border-color: var(--accent-color);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+  transform: translateY(-2px);
+}
+
+.wallet-option.metamask:hover {
+  border-color: #f6851b;
+  box-shadow: 0 8px 25px rgba(246, 133, 27, 0.15);
+}
+
+.wallet-option.coinbase:hover {
+  border-color: #0052ff;
+  box-shadow: 0 8px 25px rgba(0, 82, 255, 0.15);
+}
+
+.wallet-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: white;
+}
+
+.wallet-icon.metamask {
+  background: linear-gradient(135deg, #f6851b, #e87619);
+}
+
+.wallet-icon.coinbase {
+  background: linear-gradient(135deg, #0052ff, #0041cc);
+}
+
+.wallet-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+}
+
+.wallet-description {
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.wallet-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem 0;
+}
+
+.wallet-features li {
+  padding: 0.5rem 0;
+  color: var(--text-color);
+  font-size: 0.9rem;
+}
+
+.wallet-features i {
+  color: var(--accent-color);
+  margin-right: 0.5rem;
+  width: 16px;
+}
+
+.connect-btn {
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.connect-btn:hover {
+  background: var(--accent-hover, #1e40af);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.connect-btn.metamask:hover {
+  background: #e87619;
+  box-shadow: 0 4px 15px rgba(246, 133, 27, 0.3);
+}
+
+.connect-btn.coinbase:hover {
+  background: #0041cc;
+  box-shadow: 0 4px 15px rgba(0, 82, 255, 0.3);
+}
+
+.wallet-info {
+  background: rgba(59, 130, 246, 0.05);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  margin-top: 3rem;
+}
+
+.wallet-info h3 {
+  color: var(--text-color);
+  margin-bottom: 1rem;
+}
+
+.wallet-info p {
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.wallet-benefits {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.benefit-item {
+  text-align: center;
+}
+
+.benefit-icon {
+  width: 50px;
+  height: 50px;
+  background: var(--accent-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  color: white;
+  font-size: 1.2rem;
+}
+
+.benefit-title {
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+.benefit-description {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .wallet-container {
+    padding: 2rem 1rem;
+  }
+
+  .wallet-header h1 {
+    font-size: 2rem;
+  }
+
+  .wallet-options {
+    gap: 1.5rem;
+  }
+
+  .wallet-option {
+    padding: 1.5rem;
+  }
+
+  .wallet-benefits {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wallet-container">
+  <div class="wallet-header">
+    <h1>Connect Your Wallet</h1>
+    <p>Choose your preferred wallet to connect to DailyHelper and access blockchain features</p>
+  </div>
+
+  <div class="wallet-options">
+    <!-- MetaMask Option -->
+    <div class="wallet-option metamask" onclick="connectMetaMask()">
+      <div class="wallet-icon metamask">
+        <i class="fa-solid fa-fox"></i>
+      </div>
+      <div class="wallet-name">MetaMask</div>
+      <div class="wallet-description">
+        The most popular Web3 wallet with millions of users worldwide
+      </div>
+      <ul class="wallet-features">
+        <li><i class="fa-solid fa-check"></i> Browser extension & mobile app</li>
+        <li><i class="fa-solid fa-check"></i> Multi-network support</li>
+        <li><i class="fa-solid fa-check"></i> Built-in token swap</li>
+        <li><i class="fa-solid fa-check"></i> NFT marketplace access</li>
+      </ul>
+      <button class="connect-btn metamask">
+        <i class="fa-solid fa-fox"></i>
+        Connect MetaMask
+      </button>
+    </div>
+
+    <!-- Coinbase Wallet Option -->
+    <div class="wallet-option coinbase" onclick="connectCoinbase()">
+      <div class="wallet-icon coinbase">
+        <i class="fa-solid fa-coins"></i>
+      </div>
+      <div class="wallet-name">Coinbase Wallet</div>
+      <div class="wallet-description">
+        Secure, user-friendly wallet from the world's largest crypto exchange
+      </div>
+      <ul class="wallet-features">
+        <li><i class="fa-solid fa-check"></i> Seamless Coinbase integration</li>
+        <li><i class="fa-solid fa-check"></i> Multi-chain support</li>
+        <li><i class="fa-solid fa-check"></i> Enhanced security features</li>
+        <li><i class="fa-solid fa-check"></i> Easy fiat on-ramp</li>
+      </ul>
+      <button class="connect-btn coinbase">
+        <i class="fa-solid fa-coins"></i>
+        Connect Coinbase Wallet
+      </button>
+    </div>
+  </div>
+
+  <div class="wallet-info">
+    <h3>Why Connect Your Wallet?</h3>
+    <p>Connecting your wallet enables you to:</p>
+
+    <div class="wallet-benefits">
+      <div class="benefit-item">
+        <div class="benefit-icon">
+          <i class="fa-solid fa-eye"></i>
+        </div>
+        <div class="benefit-title">View Blockchain Activity</div>
+        <div class="benefit-description">See all platform activities recorded on the blockchain in real-time</div>
+      </div>
+
+      <div class="benefit-item">
+        <div class="benefit-icon">
+          <i class="fa-solid fa-shield-alt"></i>
+        </div>
+        <div class="benefit-title">Verify Transactions</div>
+        <div class="benefit-description">Verify the authenticity and immutability of all platform interactions</div>
+      </div>
+
+      <div class="benefit-item">
+        <div class="benefit-icon">
+          <i class="fa-solid fa-chart-line"></i>
+        </div>
+        <div class="benefit-title">Track Community Impact</div>
+        <div class="benefit-description">Monitor your contributions and the overall community blockchain footprint</div>
+      </div>
+
+      <div class="benefit-item">
+        <div class="benefit-icon">
+          <i class="fa-solid fa-cube"></i>
+        </div>
+        <div class="benefit-title">Admin Blockchain Access</div>
+        <div class="benefit-description">Access detailed blockchain analytics and block inspection tools</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function connectMetaMask() {
+  // Check if MetaMask is installed
+  if (typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask) {
+    // Request account access to trigger MetaMask extension popup
+    window.ethereum.request({
+      method: 'eth_requestAccounts'
+    })
+    .then(function(accounts) {
+      console.log('Connected to MetaMask:', accounts[0]);
+      // Show success message with connected account
+      showConnectionSuccess('MetaMask', accounts[0]);
+    })
+    .catch(function(error) {
+      console.error('MetaMask connection failed:', error);
+      if (error.code === 4001) {
+        showConnectionError('Connection rejected by user');
+      } else {
+        showConnectionError('Failed to connect to MetaMask: ' + error.message);
+      }
+    });
+  } else {
+    showConnectionError('MetaMask not detected. Please install MetaMask browser extension first.');
+  }
+}
+
+function connectCoinbase() {
+  // Check if Coinbase Wallet is installed
+  if (typeof window.ethereum !== 'undefined' && window.ethereum.isCoinbaseWallet) {
+    // Request account access to trigger Coinbase Wallet extension popup
+    window.ethereum.request({
+      method: 'eth_requestAccounts'
+    })
+    .then(function(accounts) {
+      console.log('Connected to Coinbase Wallet:', accounts[0]);
+      // Show success message with connected account
+      showConnectionSuccess('Coinbase Wallet', accounts[0]);
+    })
+    .catch(function(error) {
+      console.error('Coinbase Wallet connection failed:', error);
+      if (error.code === 4001) {
+        showConnectionError('Connection rejected by user');
+      } else {
+        showConnectionError('Failed to connect to Coinbase Wallet: ' + error.message);
+      }
+    });
+  } else {
+    showConnectionError('Coinbase Wallet not detected. Please install Coinbase Wallet browser extension first.');
+  }
+}
+
+function showConnectionSuccess(walletName, account) {
+  // Create and show success notification
+  const notification = document.createElement('div');
+  notification.className = 'connection-success';
+  notification.innerHTML = `
+    <div style="
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+      z-index: 1000;
+      max-width: 400px;
+      font-weight: 600;
+    ">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <i class="fa-solid fa-check-circle"></i>
+        <span>Successfully connected to ${walletName}!</span>
+      </div>
+      <div style="font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.9;">
+        Account: ${account.substring(0, 6)}...${account.substring(account.length - 4)}
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(notification);
+
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.parentNode.removeChild(notification);
+    }
+  }, 5000);
+}
+
+function showConnectionError(message) {
+  // Create and show error notification
+  const notification = document.createElement('div');
+  notification.className = 'connection-error';
+  notification.innerHTML = `
+    <div style="
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+      z-index: 1000;
+      max-width: 400px;
+      font-weight: 600;
+    ">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <i class="fa-solid fa-exclamation-triangle"></i>
+        <span>Connection Failed</span>
+      </div>
+      <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.9;">
+        ${message}
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(notification);
+
+  // Auto-remove after 7 seconds
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.parentNode.removeChild(notification);
+    }
+  }, 7000);
+}
+
+// Add click handlers to wallet option cards
+document.addEventListener('DOMContentLoaded', function() {
+  const metamaskCard = document.querySelector('.wallet-option.metamask');
+  const coinbaseCard = document.querySelector('.wallet-option.coinbase');
+
+  if (metamaskCard) {
+    metamaskCard.addEventListener('click', connectMetaMask);
+  }
+
+  if (coinbaseCard) {
+    coinbaseCard.addEventListener('click', connectCoinbase);
+  }
+});
+</script>
+{% endblock %}
