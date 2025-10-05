@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block head_extra %}
+<style>
+.offer-help-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.offer-help-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.offer-help-header h1 {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.offer-help-header p {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}
+
+.help-options {
+  display: grid;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.help-option {
+  background: var(--panel-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.help-option:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: var(--accent-color);
+}
+
+.help-option-icon {
+  font-size: 3rem;
+  color: var(--accent-color);
+  margin-bottom: 1rem;
+}
+
+.help-option h3 {
+  color: var(--text-color);
+  margin-bottom: 1rem;
+}
+
+.help-option p {
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.btn-primary {
+  background: var(--accent-color);
+  color: white;
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: var(--border-radius);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.btn-primary:hover {
+  background: var(--accent-color-dark, var(--accent-color));
+  transform: translateY(-1px);
+}
+
+.getting-started {
+  background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+  color: white;
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  text-align: center;
+}
+
+.getting-started h2 {
+  margin-bottom: 1rem;
+}
+
+.getting-started p {
+  margin-bottom: 1.5rem;
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.75rem 2rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--border-radius);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="offer-help-container">
+  <div class="offer-help-header">
+    <h1><i class="fa-solid fa-hand-holding-heart"></i> Offer Help</h1>
+    <p>Choose how you'd like to help others in your community</p>
+  </div>
+
+  <div class="help-options">
+    <div class="help-option">
+      <div class="help-option-icon">
+        <i class="fa-solid fa-search"></i>
+      </div>
+      <h3>Browse Available Requests</h3>
+      <p>Look through current help requests from people in your area who need assistance</p>
+      <a href="{{ url_for('marketplace') }}" class="btn btn-primary">Browse Marketplace</a>
+    </div>
+
+    <div class="help-option">
+      <div class="help-option-icon">
+        <i class="fa-solid fa-plus-circle"></i>
+      </div>
+      <h3>Volunteer for Community Service</h3>
+      <p>Join volunteer opportunities and community service projects in your area</p>
+      <a href="{{ url_for('volunteer') }}" class="btn btn-primary">View Volunteer Opportunities</a>
+    </div>
+
+    <div class="help-option">
+      <div class="help-option-icon">
+        <i class="fa-solid fa-users"></i>
+      </div>
+      <h3>Support NGOs</h3>
+      <p>Connect with verified non-governmental organizations and support their causes</p>
+      <a href="{{ url_for('ngos') }}" class="btn btn-primary">Browse NGOs</a>
+    </div>
+  </div>
+
+  <div class="getting-started">
+    <h2>Ready to Get Started?</h2>
+    <p>Your helping hand can make a real difference in someone's life</p>
+    <a href="{{ url_for('marketplace') }}" class="btn btn-secondary">Start Helping Now</a>
+  </div>
+</div>
+{% endblock %}
