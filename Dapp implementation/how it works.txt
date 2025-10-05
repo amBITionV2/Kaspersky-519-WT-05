@@ -1,0 +1,77 @@
+How it works (quick)
+
+Each node runs this script. Nodes know a set of peers (host:port). They connect to peers and exchange HANDSHAKE / PEERS messages.
+
+Local state is an in-memory dictionary where each key maps to one or more versions. Each version includes:
+
+value (JSON-serializable),
+
+vc (vector clock dict),
+
+lamport (node-local logical clock),
+
+node_id, ts, and cid (content id).
+
+When you put a key from the CLI, the node:
+
+increments its clocks,
+
+creates a version and stores it,
+
+then gossips that version to all known peers using PUT_VALUE.
+
+A peer receiving PUT_VALUE will merge that version into its store using vector clock comparisons and the merge rules. If vector clocks are concurrent, both versions are retained as siblings.
+
+You can explicitly getpeer host:port key to request a value from a neighbor. The neighbor responds with VALUE message that the requester prints.
+
+Periodic gossip (PUSH_UPDATE) sends your entire snapshot to a random peer for eventual consistency.
+
+Protocol for giving neighbouring nodes the app data structure (explicit description)
+
+The user asked for a "protocol for giving neighbouring nodes the app data [structure] if requested". The code implements this:
+
+Handshake & Peer Advertise
+
+HANDSHAKE message contains { node_id, listen, known_peers }. On receipt, the node adds the sender to its peers list and replies with PEERS { peers: [...] }. This lets nodes learn neighbor addresses.
+
+Request keys (structure-only)
+
+GET_KEYS request -> peer replies KEYS { keys: [...] }. This provides the data structure (the set of keys) without values.
+
+Request full value(s) per key
+
+GET_VALUE { key } -> peer replies with VALUE { key, versions: [...] }. The versions are the list of version objects (value + vc + lamport + node_id + ts + cid). That is the "app data structure" including version metadata required to merge.
+
+Push a single version
+
+PUT_VALUE { key, version } -> used to share a single version (example: after local put, push to neighbors). Receiver merges with local data.
+
+Push entire snapshot
+
+PUSH_UPDATE { snapshot } -> snapshot includes data (whole store) and metadata such as lamport and node_id. Receiver imports snapshot (merging each version per key).
+
+Conflict handling & merge
+
+Vector clocks compared using vc_compare. If one version dominates, that version wins. If concurrent, both versions are kept as siblings. Deterministic tie-breaker uses lamport then node id.
+
+Content addressing & integrity
+
+Each version includes cid = SHA256(serialized value). Node can verify integrity when requested.
+
+How to test (quick)
+
+Open terminal A:
+
+python decent_app.py --port 9001 --peers 127.0.0.1:9002
+
+Open terminal B:
+
+python decent_app.py --port 9002 --peers 127.0.0.1:9001
+
+In terminal A:
+
+put score {"user":"kavin","score":10}
+
+After a moment, in terminal B:
+
+get score (if gossip arrived, you'll see the version). Otherwise getpeer 127.0.0.1:9001 score to request explicitly.

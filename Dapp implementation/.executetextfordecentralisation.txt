@@ -1,0 +1,626 @@
+#!/usr/bin/env python3
+"""
+decent_app.py
+
+Simple decentralised P2P app data protocol demo.
+
+Usage examples (open multiple terminals):
+# Node A
+python decent_app.py --port 9001 --peers 127.0.0.1:9002
+# Node B
+python decent_app.py --port 9002 --peers 127.0.0.1:9001
+
+Then use the built-in CLI:
+> put mykey {"name":"kavin","score":42}
+> get mykey
+> keys
+> peers
+> gossip
+> exit
+"""
+
+import argparse
+import asyncio
+import json
+import hashlib
+import time
+import uuid
+import sys
+from typing import Dict, Any, Tuple, List
+
+# ---------------------------
+# Data model and utilities
+# ---------------------------
+
+def now_ts() -> float:
+    return time.time()
+
+def sha256_hex(s: str) -> str:
+    return hashlib.sha256(s.encode('utf-8')).hexdigest()
+
+# Vector clock operations
+def vc_increment(vc: Dict[str, int], node_id: str) -> Dict[str, int]:
+    vc = dict(vc)  # copy
+    vc[node_id] = vc.get(node_id, 0) + 1
+    return vc
+
+def vc_compare(a: Dict[str, int], b: Dict[str, int]) -> str:
+    """
+    Compare vector clocks a and b.
+    Return:
+      'gt' if a > b (a dominates)
+      'lt' if a < b (b dominates)
+      'eq' if equal
+      'concurrent' if neither dominates
+    """
+    nodes = set(a.keys()) | set(b.keys())
+    greater = False
+    less = False
+    for n in nodes:
+        av = a.get(n, 0)
+        bv = b.get(n, 0)
+        if av > bv:
+            greater = True
+        elif av < bv:
+            less = True
+    if greater and not less:
+        return 'gt'
+    if less and not greater:
+        return 'lt'
+    if not greater and not less:
+        return 'eq'
+    return 'concurrent'
+
+# Merge function: keeps both values as "siblings" if concurrent.
+def merge_records(rec_a: Dict[str, Any], rec_b: Dict[str, Any], tie_node_id: str):
+    """
+    Given two records with fields: value, vc, lamport, node_id, ts
+    return merged record list (could be single record or both if concurrent).
+    We'll store as list-of-versions in the database entry for simplicity.
+    """
+    if rec_a is None:
+        return [rec_b]
+    if rec_b is None:
+        return [rec_a]
+    cmp = vc_compare(rec_a['vc'], rec_b['vc'])
+    if cmp == 'gt':
+        return [rec_a]
+    if cmp == 'lt':
+        return [rec_b]
+    if cmp == 'eq':
+        # identical clocks - pick one deterministically by lamport, then node_id
+        if rec_a['lamport'] > rec_b['lamport']:
+            return [rec_a]
+        if rec_a['lamport'] < rec_b['lamport']:
+            return [rec_b]
+        # tie -> node id
+        if rec_a['node_id'] >= rec_b['node_id']:
+            return [rec_a]
+        return [rec_b]
+    # concurrent -> keep both as siblings but order them
+    # order by lamport desc then node_id to keep deterministic
+    pair = [rec_a, rec_b]
+    pair.sort(key=lambda r: (r['lamport'], r['node_id']), reverse=True)
+    return pair
+
+# Content-addressed object id for a value (for optional integrity)
+def content_id(value_any) -> str:
+    s = json.dumps(value_any, sort_keys=True, separators=(',', ':'))
+    return sha256_hex(s)
+
+# ---------------------------
+# AppState: local database
+# ---------------------------
+
+class AppState:
+    """
+    Simple in-memory datastore:
+    - keys -> list of versions (each version is a dict with value, vc, lamport, node_id, ts, cid)
+    """
+    def __init__(self, node_id: str):
+        self.node_id = node_id
+        self.store: Dict[str, List[Dict[str, Any]]] = {}
+        # Lamport clock local counter
+        self.lamport = 0
+
+    def _bump_lamport(self, external: int = None):
+        if external is None:
+            self.lamport += 1
+        else:
+            # Ensure lamport moves forward relative to external
+            self.lamport = max(self.lamport, external) + 1
+        return self.lamport
+
+    def put(self, key: str, value: Any, incoming_vc: Dict[str, int] = None, incoming_lamport: int = None, origin_node: str = None):
+        """
+        Insert or update a key. If incoming_vc provided, merge accordingly.
+        Returns the new record(s) for the key.
+        """
+        # bump lamport
+        self._bump_lamport(incoming_lamport)
+        # compute new vc based on incoming vc
+        vc = incoming_vc.copy() if incoming_vc else {}
+        vc = vc_increment(vc, self.node_id)
+        rec = {
+            'value': value,
+            'vc': vc,
+            'lamport': self.lamport,
+            'node_id': origin_node or self.node_id,
+            'ts': now_ts(),
+            'cid': content_id(value),
+        }
+        existing_versions = self.store.get(key)
+        if not existing_versions:
+            self.store[key] = [rec]
+            return self.store[key]
+        else:
+            # Merge new record with existing versions
+            merged = []
+            for ev in existing_versions:
+                merged = merge_records(ev, rec, tie_node_id=self.node_id)
+                # merged may return one or two versions; but after first merge, we need to ensure we
+                # compare with rest — simplest approach: form new_versions list and reduce
+                # We'll use pairwise reduction
+                break
+            # pairwise reduction across all versions:
+            new_versions = [rec]
+            # merge existing versions into new_versions
+            for ev in existing_versions:
+                temp = []
+                for nv in new_versions:
+                    m = merge_records(nv, ev, tie_node_id=self.node_id)
+                    temp.extend(m)
+                new_versions = temp
+            # deduplicate by cid+node+lamport
+            seen = set()
+            final = []
+            for v in new_versions:
+                keyid = (v['cid'], v['node_id'], v['lamport'])
+                if keyid not in seen:
+                    final.append(v)
+                    seen.add(keyid)
+            self.store[key] = final
+            return self.store[key]
+
+    def get(self, key: str):
+        return self.store.get(key)
+
+    def keys(self):
+        return list(self.store.keys())
+
+    def serialize_value(self, version: Dict[str, Any]) -> Any:
+        # return the stored value (could be anything JSON-serializable)
+        return version['value']
+
+    def export_snapshot(self) -> Dict[str, Any]:
+        """
+        Export the entire state (keys + versions) for sharing.
+        """
+        return {
+            'node_id': self.node_id,
+            'lamport': self.lamport,
+            'snapshot_ts': now_ts(),
+            'data': self.store
+        }
+
+    def import_snapshot(self, snapshot: Dict[str, Any]):
+        """
+        Merge a snapshot received from a peer.
+        """
+        incoming_lamport = snapshot.get('lamport', 0)
+        self._bump_lamport(incoming_lamport)
+        incoming_data = snapshot.get('data', {})
+        for key, versions in incoming_data.items():
+            for v in versions:
+                # For each version, call put with its vc and lamport
+                self.put(key=key, value=v['value'], incoming_vc=v['vc'], incoming_lamport=v['lamport'], origin_node=v.get('node_id'))
+
+# ---------------------------
+# Networking: message protocol
+# ---------------------------
+
+# Message types:
+# HANDSHAKE { node_id, listen_port, known_peers }
+# PEERS { peers: [ ] }
+# GET_KEYS {}
+# KEYS { keys: [...] }
+# GET_VALUE { key }
+# VALUE { key, versions: [...] }
+# PUT_VALUE { key, version: {...} }  # used to push single version
+# PUSH_UPDATE { snapshot }  # used to push whole snapshot
+# PING {}
+# PONG {}
+
+def make_msg(mtype: str, payload: dict) -> str:
+    envelope = {
+        'type': mtype,
+        'payload': payload,
+    }
+    return json.dumps(envelope, separators=(',', ':')) + "\n"
+
+def parse_msg(line: str) -> Dict[str, Any]:
+    try:
+        return json.loads(line)
+    except Exception as e:
+        return {'type': 'INVALID', 'payload': {'raw': line, 'err': str(e)}}
+
+# ---------------------------
+# P2P Node implementation
+# ---------------------------
+
+class P2PNode:
+    def __init__(self, listen_host: str, listen_port: int, bootstrap_peers: List[Tuple[str, int]]):
+        self.listen_host = listen_host
+        self.listen_port = listen_port
+        self.node_id = f"{uuid.uuid4().hex[:8]}@{listen_host}:{listen_port}"
+        self.app = AppState(self.node_id)
+        # peers stored as "host:port" -> (host, port)
+        self.peers: Dict[str, Tuple[str, int]] = {}
+        for p in bootstrap_peers:
+            k = f"{p[0]}:{p[1]}"
+            self.peers[k] = p
+        # outgoing connections (address->writer)
+        self.out_writers: Dict[str, asyncio.StreamWriter] = {}
+        # connection lock
+        self.lock = asyncio.Lock()
+        # background tasks list
+        self.bg_tasks = []
+
+    async def start(self):
+        server = await asyncio.start_server(self.handle_connection, host=self.listen_host, port=self.listen_port)
+        addr = server.sockets[0].getsockname()
+        print(f"[{self.node_id}] Listening on {addr}")
+        # start background peer maintainer
+        t = asyncio.create_task(self.maintain_peers_loop())
+        self.bg_tasks.append(t)
+        # begin console input loop
+        return server
+
+    async def maintain_peers_loop(self):
+        while True:
+            try:
+                await self.gossip_with_peers()
+            except Exception as e:
+                print("maintain_peers_loop error:", e)
+            await asyncio.sleep(6)  # small delay between gossip attempts
+
+    async def connect_peer(self, host: str, port: int) -> Tuple[asyncio.StreamReader, asyncio.StreamWriter]:
+        addrkey = f"{host}:{port}"
+        if addrkey in self.out_writers:
+            return None  # already have writer (we keep it simple)
+        try:
+            reader, writer = await asyncio.open_connection(host=host, port=port)
+            self.out_writers[addrkey] = writer
+            # send handshake
+            hs = make_msg('HANDSHAKE', {'node_id': self.node_id, 'listen': f"{self.listen_host}:{self.listen_port}", 'known_peers': list(self.peers.keys())})
+            writer.write(hs.encode('utf-8'))
+            await writer.drain()
+            return reader, writer
+        except Exception as e:
+            # connection failed
+            #print(f"connect_peer failed to {addrkey}: {e}")
+            return None
+
+    async def handle_connection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
+        peername = writer.get_extra_info('peername')
+        # print(f"Incoming connection from {peername}")
+        # Simple line-based protocol: messages are newline-terminated JSON
+        try:
+            while True:
+                line = await reader.readline()
+                if not line:
+                    break
+                line = line.decode('utf-8').strip()
+                if not line:
+                    continue
+                msg = parse_msg(line)
+                await self.handle_message(msg, writer)
+        except Exception as e:
+            # print("connection handler error:", e)
+            pass
+        finally:
+            try:
+                writer.close()
+                await writer.wait_closed()
+            except:
+                pass
+
+    async def handle_message(self, msg: Dict[str, Any], writer: asyncio.StreamWriter):
+        mtype = msg.get('type')
+        payload = msg.get('payload', {})
+        if mtype == 'HANDSHAKE':
+            remote_node = payload.get('node_id')
+            listen = payload.get('listen')
+            # parse listen "host:port"
+            if listen and ':' in listen:
+                host, port = listen.split(':')
+                addrkey = f"{host}:{port}"
+                self.peers[addrkey] = (host, int(port))
+            # reply with our peers
+            writer.write(make_msg('PEERS', {'peers': list(self.peers.keys())}).encode('utf-8'))
+            await writer.drain()
+        elif mtype == 'PEERS':
+            peers = payload.get('peers', [])
+            for p in peers:
+                if ':' in p:
+                    host, port = p.split(':')
+                    k = f"{host}:{port}"
+                    if k != f"{self.listen_host}:{self.listen_port}" and k not in self.peers:
+                        self.peers[k] = (host, int(port))
+        elif mtype == 'GET_KEYS':
+            keys = self.app.keys()
+            writer.write(make_msg('KEYS', {'keys': keys}).encode('utf-8'))
+            await writer.drain()
+        elif mtype == 'KEYS':
+            # remote responded with keys — we can optionally request specific ones
+            # For demo, we ignore automatic fetch. CLI handles explicit requests.
+            pass
+        elif mtype == 'GET_VALUE':
+            key = payload.get('key')
+            versions = self.app.get(key)
+            writer.write(make_msg('VALUE', {'key': key, 'versions': versions or []}).encode('utf-8'))
+            await writer.drain()
+        elif mtype == 'VALUE':
+            # Received a value response for a prior request (if any)
+            # For demo, we'll print to console
+            print(f"[{self.node_id}] RECEIVED VALUE: {json.dumps(payload, default=str)}")
+        elif mtype == 'PUT_VALUE':
+            key = payload.get('key')
+            version = payload.get('version')
+            if version:
+                # Accept and merge
+                self.app.put(key=key, value=version['value'], incoming_vc=version['vc'], incoming_lamport=version['lamport'], origin_node=version.get('node_id'))
+                # Optionally forward push to peers (gossip)
+            # send ack (simple)
+            writer.write(make_msg('ACK', {'ok': True}).encode('utf-8'))
+            await writer.drain()
+        elif mtype == 'PUSH_UPDATE':
+            snapshot = payload.get('snapshot')
+            if snapshot:
+                self.app.import_snapshot(snapshot)
+                writer.write(make_msg('ACK', {'ok': True}).encode('utf-8'))
+                await writer.drain()
+        elif mtype == 'PING':
+            writer.write(make_msg('PONG', {'ts': now_ts()}).encode('utf-8'))
+            await writer.drain()
+        elif mtype == 'PONG':
+            pass  # ignore
+        else:
+            # unknown message
+            writer.write(make_msg('ERR', {'err': 'unknown message type'}).encode('utf-8'))
+            await writer.drain()
+
+    async def send_to_peer(self, addrkey: str, msg: str):
+        # ensure writer exists, else attempt to connect
+        host, port = self.peers.get(addrkey, (None, None))
+        if host is None:
+            return False
+        writer = self.out_writers.get(addrkey)
+        if not writer:
+            try:
+                conn = await self.connect_peer(host, port)
+                if not conn:
+                    return False
+                reader, writer = conn
+            except:
+                return False
+        try:
+            writer.write(msg.encode('utf-8'))
+            await writer.drain()
+            return True
+        except Exception as e:
+            # failed to send; drop writer
+            try:
+                writer.close()
+                await writer.wait_closed()
+            except:
+                pass
+            self.out_writers.pop(addrkey, None)
+            return False
+
+    async def gossip_with_peers(self):
+        """
+        Periodically gossip: send a short summary and optionally push updates.
+        Strategy:
+          - For each known peer, send HANDSHAKE (if not already connected)
+          - Occasionally send PUSH_UPDATE (snapshot) to random peer
+        """
+        peer_keys = list(self.peers.keys())
+        if not peer_keys:
+            return
+        # handshake/connect to peers if not connected
+        for k in peer_keys:
+            host, port = self.peers[k]
+            # attempt a connection in background (non-blocking)
+            asyncio.create_task(self._ensure_connection(host, port))
+        # Occasionally push full snapshot to a random subset
+        if len(peer_keys) > 0:
+            import random
+            chosen = random.choice(peer_keys)
+            snapshot = self.app.export_snapshot()
+            msg = make_msg('PUSH_UPDATE', {'snapshot': snapshot})
+            await self.send_to_peer(chosen, msg)
+
+    async def _ensure_connection(self, host: str, port: int):
+        addrkey = f"{host}:{port}"
+        if addrkey in self.out_writers:
+            return
+        await self.connect_peer(host, port)
+
+    # CLI actions that use the network
+    async def peer_get_keys(self, addrkey: str):
+        msg = make_msg('GET_KEYS', {})
+        ok = await self.send_to_peer(addrkey, msg)
+        return ok
+
+    async def peer_get_value(self, addrkey: str, key: str):
+        msg = make_msg('GET_VALUE', {'key': key})
+        return await self.send_to_peer(addrkey, msg)
+
+    async def peer_put_value(self, addrkey: str, key: str, version: Dict[str, Any]):
+        msg = make_msg('PUT_VALUE', {'key': key, 'version': version})
+        return await self.send_to_peer(addrkey, msg)
+
+    async def peer_push_snapshot(self, addrkey: str):
+        snapshot = self.app.export_snapshot()
+        msg = make_msg('PUSH_UPDATE', {'snapshot': snapshot})
+        return await self.send_to_peer(addrkey, msg)
+
+# ---------------------------
+# Simple CLI for testing
+# ---------------------------
+
+HELP = """
+Commands:
+  put <key> <json-value>        - put a value into local state and gossip
+  get <key>                     - show local versions for a key
+  getpeer <peer> <key>          - request value from peer (peer host:port)
+  keys                          - list local keys
+  peers                         - list known peers
+  addpeer <host:port>           - add known peer
+  gossip                        - force push snapshot to all peers
+  snapshot                      - print full local snapshot
+  exit                          - quit
+"""
+
+async def repl(node: P2PNode):
+    print("Interactive CLI started. Type 'help' for commands.")
+    while True:
+        try:
+            raw = await asyncio.get_event_loop().run_in_executor(None, sys.stdin.readline)
+            if not raw:
+                await asyncio.sleep(0.1)
+                continue
+            line = raw.strip()
+            if not line:
+                continue
+            parts = line.split(' ', 2)
+            cmd = parts[0].lower()
+            if cmd == 'help':
+                print(HELP)
+            elif cmd == 'put':
+                if len(parts) < 3:
+                    print("usage: put <key> <json-value>")
+                    continue
+                key = parts[1]
+                try:
+                    value = json.loads(parts[2])
+                except Exception as e:
+                    print("invalid json:", e)
+                    continue
+                versions = node.app.put(key=key, value=value)
+                print("PUT -> key:", key, "versions_count:", len(versions))
+                # simple gossip: push this particular version to all peers
+                # We send as PUT_VALUE messages
+                for pk in list(node.peers.keys()):
+                    for v in versions:
+                        asyncio.create_task(node.peer_put_value(pk, key, v))
+            elif cmd == 'get':
+                if len(parts) < 2:
+                    print("usage: get <key>")
+                    continue
+                key = parts[1]
+                versions = node.app.get(key)
+                print(f"Local versions for {key}:")
+                if not versions:
+                    print("<no local value>")
+                else:
+                    for v in versions:
+                        print(json.dumps(v, indent=2, default=str))
+            elif cmd == 'getpeer':
+                if len(parts) < 3:
+                    print("usage: getpeer <peer> <key>")
+                    continue
+                peer = parts[1]
+                key = parts[2]
+                if peer not in node.peers:
+                    print("unknown peer:", peer)
+                    continue
+                await node.peer_get_value(peer, key)
+                print("Requested value from peer", peer)
+            elif cmd == 'keys':
+                print("Local keys:", node.app.keys())
+            elif cmd == 'peers':
+                print("Known peers:")
+                for k, v in node.peers.items():
+                    print(" ", k)
+            elif cmd == 'addpeer':
+                if len(parts) < 2:
+                    print("usage: addpeer host:port")
+                    continue
+                target = parts[1]
+                if ':' not in target:
+                    print("provide host:port")
+                    continue
+                host, port = target.split(':')
+                node.peers[target] = (host, int(port))
+                print("added peer", target)
+            elif cmd == 'gossip':
+                # push snapshot to all peers
+                for pk in list(node.peers.keys()):
+                    asyncio.create_task(node.peer_push_snapshot(pk))
+                print("gossip triggered to peers")
+            elif cmd == 'snapshot':
+                snap = node.app.export_snapshot()
+                print(json.dumps(snap, indent=2, default=str))
+            elif cmd == 'exit' or cmd == 'quit':
+                print("shutting down...")
+                for t in node.bg_tasks:
+                    t.cancel()
+                await asyncio.sleep(0.2)
+                # close writers
+                for w in list(node.out_writers.values()):
+                    try:
+                        w.close()
+                    except:
+                        pass
+                await asyncio.sleep(0.1)
+                break
+            else:
+                print("unknown command. type 'help'.")
+        except KeyboardInterrupt:
+            print("Interrupted. Exiting CLI.")
+            break
+        except Exception as e:
+            print("REPL error:", e)
+
+# ---------------------------
+# Command-line entrypoint
+# ---------------------------
+
+def parse_bootstrap(peers_str: List[str]) -> List[Tuple[str, int]]:
+    arr = []
+    for p in peers_str:
+        if ':' in p:
+            host, port = p.split(':')
+            try:
+                arr.append((host, int(port)))
+            except:
+                pass
+    return arr
+
+async def main_async(args):
+    bootstrap = parse_bootstrap(args.peers or [])
+    node = P2PNode(listen_host=args.host, listen_port=args.port, bootstrap_peers=bootstrap)
+    server = await node.start()
+    # If bootstrap peers provided, attempt to connect
+    for p in bootstrap:
+        asyncio.create_task(node._ensure_connection(p[0], p[1]))
+    # run repl + server forever
+    await repl(node)
+    server.close()
+    await server.wait_closed()
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--host', default='127.0.0.1', help='listen host')
+    parser.add_argument('--port', type=int, default=9001, help='listen port')
+    parser.add_argument('--peers', nargs='*', help='bootstrap peer list host:port', default=[])
+    args = parser.parse_args()
+    try:
+        asyncio.run(main_async(args))
+    except KeyboardInterrupt:
+        print("exiting")
+
+if __name__ == '__main__':
+    main()
